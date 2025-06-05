@@ -39,6 +39,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -47,9 +48,11 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -137,7 +140,28 @@ fun CameraPreviewContent(
 class CameraPreviewViewModel : ViewModel() {
     // used to set up a link between the Camera and your UI.
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
+
+    // used to block handling results until last handler finished
+    private val _scanningEnabled = MutableStateFlow(true)
+
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
+
+    fun onQrCodeDetected(qrCode: String) {
+        if (_scanningEnabled.value) {
+            _scanningEnabled.value = false // lock scanning
+
+            viewModelScope.launch {
+                processQrCode(qrCode)
+                _scanningEnabled.value = true // unlock scanning after processing
+            }
+        }
+    }
+
+    suspend fun processQrCode(qrCode: String) {
+        println("Scanned QR: $qrCode") // TODO: Handle scanned QR code
+        delay(5000)
+    }
+
 
     private val cameraPreviewUseCase = Preview.Builder().build().apply {
         setSurfaceProvider { newSurfaceRequest ->
@@ -161,12 +185,18 @@ class CameraPreviewViewModel : ViewModel() {
                     ImageAnalysis.COORDINATE_SYSTEM_ORIGINAL,
                     ContextCompat.getMainExecutor(appContext)
                 ) { result ->
+
                     val barcodes = result?.getValue(barcodeScanner)
+
                     barcodes?.firstOrNull()?.rawValue?.let { qrCode ->
-                        println("Scanned QR: $qrCode") // TODO: Handle scanned QR code
+                        onQrCodeDetected(qrCode)
                     }
                 }
                 setAnalyzer(ContextCompat.getMainExecutor(appContext)) { imageProxy ->
+                    if (!_scanningEnabled.value) {
+                        imageProxy.close()  // Skip analysis if locked
+                        return@setAnalyzer
+                    }
                     analyzer.analyze(imageProxy)
                 }
             }
