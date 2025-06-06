@@ -1,43 +1,64 @@
 package xyz.lilsus.papp.ui.main
 
 import android.content.Context
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.core.SurfaceRequest
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.mlkit.vision.MlKitAnalyzer
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.*
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.data.ApiRepository
 
-class MainViewModel(    private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
+class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
 
     private val _scannedQrCode = MutableStateFlow<String?>(null)
     val scannedQrCode: StateFlow<String?> = _scannedQrCode
 
+    private val _paymentResult = MutableStateFlow<String?>(null)   // API response or error message
+    val paymentResult: StateFlow<String?> = _paymentResult
+
+    private val _isPayingInvoice = MutableStateFlow(false)
+    val isPayingInvoice: StateFlow<Boolean> = _isPayingInvoice
+
     fun onQrCodeDetected(qr: String) {
-        if (_scannedQrCode.value == null) {
-            // Launch coroutine to fetch API data and update scannedQrCode
-            viewModelScope.launch {
-                val apiResponse = try {
-                    apiRepository.fetchDataFromApi()
-                } catch (e: Exception) {
-                    "API Error: ${e.message}"
-                }
-                _scannedQrCode.value = apiResponse
-            }
+        if (_scannedQrCode.value == null && !_isPayingInvoice.value) {
+            _scannedQrCode.value = qr
+            payInvoice(qr)
         }
     }
 
+    private fun payInvoice(paymentRequest: String) {
+        viewModelScope.launch {
+            _isPayingInvoice.value = true
+            _paymentResult.value = null
+            val result = try {
+                apiRepository.payInvoice(paymentRequest)
+            } catch (e: Exception) {
+                "Payment error: ${e.message}"
+            }
+            _paymentResult.value = result
+            _isPayingInvoice.value = false
+        }
+    }
+
+
     fun dismissQrCode() {
         _scannedQrCode.value = null
+        _paymentResult.value = null
     }
 
     private val previewUseCase = Preview.Builder().build().apply {
