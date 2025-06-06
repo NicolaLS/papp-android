@@ -2,15 +2,23 @@ package xyz.lilsus.papp.ui.main
 
 import android.Manifest
 import androidx.camera.compose.CameraXViewfinder
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -33,11 +41,11 @@ import com.google.accompanist.permissions.shouldShowRationale
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
 
     if (cameraPermission.status.isGranted) {
-        MainScreenContent(viewModel)
+        MainScreenContent(viewModel, onSettingsClick)
     } else {
         Column(
             modifier = Modifier
@@ -61,7 +69,7 @@ fun MainScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun MainScreenContent(viewModel: MainViewModel) {
+fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
@@ -84,6 +92,27 @@ fun MainScreenContent(viewModel: MainViewModel) {
             isLoading = isPayingInvoice,
             onDismiss = viewModel::dismissQrCode
         )
+    }
+
+    // Settings Button at top-left corner
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+    ) {
+        IconButton(
+            onClick = onSettingsClick,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+                .size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                modifier = Modifier.size(32.dp)
+            )
+        }
     }
 }
 
