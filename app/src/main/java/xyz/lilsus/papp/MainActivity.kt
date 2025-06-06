@@ -20,12 +20,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,7 +43,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -48,11 +51,9 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,7 +116,9 @@ fun CameraPreviewContent(
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
 ) {
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+    val scannedQrCode by viewModel.scannedQrCode.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
     LaunchedEffect(lifecycleOwner) {
         viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
     }
@@ -126,33 +129,33 @@ fun CameraPreviewContent(
             modifier = modifier
         )
     }
+
+    if (scannedQrCode != null) {
+        QrCodeBottomSheet(
+            scannedQrCode = scannedQrCode!!,
+            onDismiss = viewModel::dismissQrCode
+        )
+    }
 }
+
 
 class CameraPreviewViewModel : ViewModel() {
     // used to set up a link between the Camera and your UI.
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
-
-    // used to block handling results until last handler finished
-    private val _scanningEnabled = MutableStateFlow(true)
-
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
 
-    fun onQrCodeDetected(qrCode: String) {
-        if (_scanningEnabled.value) {
-            _scanningEnabled.value = false // lock scanning
+    private val _scannedQrCode = MutableStateFlow<String?>(null)
+    val scannedQrCode: StateFlow<String?> = _scannedQrCode
 
-            viewModelScope.launch {
-                processQrCode(qrCode)
-                _scanningEnabled.value = true // unlock scanning after processing
-            }
+    fun onQrCodeDetected(qrCode: String) {
+        if (_scannedQrCode.value == null) {
+            _scannedQrCode.value = qrCode
         }
     }
 
-    suspend fun processQrCode(qrCode: String) {
-        println("Scanned QR: $qrCode") // TODO: Handle scanned QR code
-        delay(5000)
+    fun dismissQrCode() {
+        _scannedQrCode.value = null
     }
-
 
     private val cameraPreviewUseCase = Preview.Builder().build().apply {
         setSurfaceProvider { newSurfaceRequest ->
@@ -184,7 +187,7 @@ class CameraPreviewViewModel : ViewModel() {
                     }
                 }
                 setAnalyzer(ContextCompat.getMainExecutor(appContext)) { imageProxy ->
-                    if (!_scanningEnabled.value) {
+                    if (_scannedQrCode.value != null) {
                         imageProxy.close()  // Skip analysis if locked
                         return@setAnalyzer
                     }
@@ -202,6 +205,47 @@ class CameraPreviewViewModel : ViewModel() {
             awaitCancellation()
         } finally {
             processCameraProvider.unbindAll()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QrCodeBottomSheet(
+    scannedQrCode: String,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    LaunchedEffect(scannedQrCode) {
+        // Optionally trigger side effects when the QR code changes
+        // TODO: Not sure if this is the right place to trigger business logic, so this might
+        // get refactored. Also I need to debuff the same QR data after sheet is closed
+        // because it feels weird if you point the device towrds the qr click on close but
+        // it opens the sheet immediately. so the same data that was seen last time should not be
+        // handled for e.g. 3 secs.
+        println("Showing bottom sheet for: $scannedQrCode")
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Scanned QR Code:", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(scannedQrCode, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onDismiss) {
+                Text("Close")
+            }
         }
     }
 }
