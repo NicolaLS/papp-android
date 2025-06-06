@@ -1,6 +1,7 @@
 package xyz.lilsus.papp.ui.main
 
 import android.Manifest
+import androidx.activity.compose.BackHandler
 import androidx.camera.compose.CameraXViewfinder
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +22,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -124,28 +128,47 @@ fun QrCodeBottomSheet(
     isLoading: Boolean,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val done = remember { mutableStateOf(false) }
 
-    LaunchedEffect(scannedQrCode) {
-        println("Scanned QR: $scannedQrCode")
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { newState ->
+            // Allow dismiss only if done
+            newState != SheetValue.Hidden || done.value
+        }
+    )
+
+    LaunchedEffect(paymentResult) {
+        if (paymentResult != null) {
+            // Delay a bit to avoid accidental dismissal.
+            kotlinx.coroutines.delay(1000)
+            done.value = true
+        }
     }
+
+
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
+        // Block system back press unless done
+        BackHandler(enabled = done.value == false) {}
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .wrapContentSize(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isLoading) {
+            if (isLoading && paymentResult == null) {
                 // TODO: Show spinner while waiting for payment response
                 CircularProgressIndicator()
             } else {
+                // Handle Payment Result
+
                 Text(
-                    paymentResult ?: "No payment result yet",
+                    paymentResult!!,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -153,6 +176,8 @@ fun QrCodeBottomSheet(
                 Button(onClick = onDismiss) {
                     Text("Close")
                 }
+
+
             }
         }
     }
