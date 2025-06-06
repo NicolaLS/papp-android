@@ -12,26 +12,24 @@ Connect wallets and use this app as a better frontend. Planned Blink and Alby fo
 
 - Settings page
 - Persist and load settings
-
 - Secure API key storage
 - OAuth2 (do this later for now manual key input)
-
-- Better UI for main screen
-
+- Alby connect
 - Error handling
-
 - General style spec.
-
 - Connect LN node ?
-
 - nostr wallet stuff ?
 
 
-## Details
-
-- disable rotation / enforce potrait mode
-- disable dissmissing the bottom sheet before either error or success
 - only attempt to pay ln invoices, no need for actual bolt11 validation
+- add bolt11 kotlin library and parse amount:
+https://github.com/block/ln-invoice
+- bundle qr code pay result bolt11 parsed data in one struct
+- show nice checkmark after pay
+- show amount from pay result after pay, if n/a fall back on parsed amount
+- debounce for the *same* qr scanned so that if req fails or cancel, or even succeeds,
+  and user still points phone at same qr it does not immediately try again.
+- do **nothing** if its not a ln invoice, or an amountless invoice
 
 # Ideas
 
