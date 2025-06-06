@@ -2,55 +2,97 @@ package xyz.lilsus.papp.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import xyz.lilsus.papp.util.ApiConstants
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import java.io.IOException
 
 class ApiRepository {
-    // TODO: only attempt to pay ln invoices or bitcoin:xxx?ln=xxx
-    suspend fun payInvoice(paymentRequest: String): String = withContext(Dispatchers.IO) {
-        val url = URL("https://api.blink.sv/graphql")
-        val connection = url.openConnection() as HttpURLConnection
 
-        // The GraphQL mutation query with variables
-        val rawJson = """
-{
-  "query": "mutation LnInvoicePaymentSend(__DOLLAR__input: LnInvoicePaymentInput!) { lnInvoicePaymentSend(input: __DOLLAR__input) { status errors { message path code } } }",
-  "variables": {
-    "input": {
-      "paymentRequest": "$paymentRequest",
-      "walletId": "${ApiConstants.WALLET_ID}"
+    private val client = OkHttpClient()
+    private val json = Json { ignoreUnknownKeys = true }
+
+    companion object {
+        private const val GRAPHQL_URL = "https://api.blink.sv/graphql"
+        private val JSON_MEDIA_TYPE = "application/json".toMediaType()
+
+        private const val PAY_INVOICE_MUTATION = """
+            mutation LnInvoicePaymentSend(${'$'}input: LnInvoicePaymentInput!) {
+              lnInvoicePaymentSend(input: ${'$'}input) {
+                status
+                errors {
+                  message
+                  path
+                  code
+                }
+              }
+            }
+        """
     }
-  }
-}
-""".trimIndent()
 
-        val jsonPayload = rawJson.replace("__DOLLAR__", "$")
-
-
-        try {
-            connection.requestMethod = "POST"
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("X-API-KEY", ApiConstants.API_KEY)
-            connection.connectTimeout = 10000
-            connection.readTimeout = 10000
-
-            // Write JSON body
-            OutputStreamWriter(connection.outputStream).use { writer ->
-                writer.write(jsonPayload)
-                writer.flush()
+    suspend fun payInvoice(paymentRequest: String): PayInvoiceResponse =
+        withContext(Dispatchers.IO) {
+            // Build variables JSON object
+            val variables = buildJsonObject {
+                putJsonObject("input") {
+                    put("paymentRequest", paymentRequest)
+                    put("walletId", ApiConstants.WALLET_ID)
+                }
             }
 
-            val responseCode = connection.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                connection.inputStream.bufferedReader().use { it.readText() }
-            } else {
-                "Error: $responseCode - ${connection.errorStream?.bufferedReader()?.readText()}"
+            // Build full request body JSON
+            val requestBodyJson = buildJsonObject {
+                put("query", PAY_INVOICE_MUTATION)
+                put("variables", variables)
+            }.toString()
+
+            val requestBody = requestBodyJson.toRequestBody(JSON_MEDIA_TYPE)
+
+            val request = Request.Builder()
+                .url(GRAPHQL_URL)
+                .post(requestBody)
+                .addHeader("X-API-KEY", ApiConstants.API_KEY)
+                .build()
+
+            val response = client.newCall(request).execute()
+
+            if (!response.isSuccessful) {
+                throw IOException("Unexpected HTTP code ${response.code}: ${response.message}")
             }
-        } finally {
-            connection.disconnect()
+
+            val bodyString = response.body?.string()
+                ?: throw IOException("Empty response body")
+
+            json.decodeFromString(PayInvoiceResponse.serializer(), bodyString)
         }
-    }
 }
+
+@Serializable
+data class PayInvoiceResponse(
+    val data: PayInvoiceData? = null
+)
+
+@Serializable
+data class PayInvoiceData(
+    val lnInvoicePaymentSend: PaymentSendResult
+)
+
+@Serializable
+data class PaymentSendResult(
+    val status: String,
+    val errors: List<PaymentError> = emptyList()
+)
+
+@Serializable
+data class PaymentError(
+    val message: String,
+    val path: List<String> = emptyList(),
+    val code: String? = null
+)

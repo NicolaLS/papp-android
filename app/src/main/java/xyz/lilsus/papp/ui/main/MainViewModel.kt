@@ -37,6 +37,10 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
     fun onQrCodeDetected(qr: String) {
         if (_scannedQrCode.value == null && !_isPayingInvoice.value) {
             _scannedQrCode.value = qr
+            // TODO: only attempt to pay ln invoices or bitcoin:xxx?ln=xxx
+            // TODO: because blink does not respond with amount paid, we'll need to
+            // parse the invoice and remember the amount -.-
+            // try to get them to respond with amount paid and fee paid
             payInvoice(qr)
         }
     }
@@ -50,7 +54,7 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
             } catch (e: Exception) {
                 "Payment error: ${e.message}"
             }
-            _paymentResult.value = result
+            _paymentResult.value = result.toString()
             _isPayingInvoice.value = false
         }
     }
