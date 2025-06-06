@@ -59,15 +59,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // NOTE: Maybe remove this to show navigation and status bar.
-        // Immersive mode
-        val controller = WindowCompat.getInsetsController(window, window.decorView)
-        controller.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
-        controller.hide(WindowInsetsCompat.Type.systemBars())
-
-
         setContent {
             MaterialTheme {
                 val viewModel = remember { CameraPreviewViewModel() }
