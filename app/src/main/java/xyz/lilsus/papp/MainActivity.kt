@@ -1,55 +1,18 @@
 package xyz.lilsus.papp
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.camera.compose.CameraXViewfinder
-import androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.core.SurfaceRequest
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.lifecycle.awaitInstance
-import androidx.camera.mlkit.vision.MlKitAnalyzer
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import xyz.lilsus.papp.ui.main.MainScreen
+import xyz.lilsus.papp.ui.main.MainViewModel
+
+enum class Screen {
+    MAIN, SETTINGS
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,190 +21,21 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                val viewModel = remember { CameraPreviewViewModel() }
-                CameraPreviewScreen(viewModel)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun CameraPreviewScreen(
-    viewModel: CameraPreviewViewModel,
-    modifier: Modifier = Modifier
-) {
-    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
-    if (cameraPermissionState.status.isGranted) {
-        CameraPreviewContent(viewModel, modifier)
-    } else {
-
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .wrapContentSize()
-                .widthIn(max = 480.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val textToShow = if (cameraPermissionState.status.shouldShowRationale) {
-                // If the user has denied the permission but the rationale can be shown,
-                // then gently explain why the app requires this permission
-                "Whoops! Looks like we need your camera to work our magic!" +
-                        "Don't worry, we just wanna see your pretty face (and maybe some cats). " +
-                        "Grant us permission and let's get this party started!"
-            } else {
-                // If it's the first time the user lands on this feature, or the user
-                // doesn't want to be asked again for this permission, explain that the
-                // permission is required
-                "Hi there! We need your camera to work our magic! ✨\n" +
-                        "Grant us permission and let's get this party started! \uD83C\uDF89"
-            }
-            Text(textToShow, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
-                Text("Unleash the Camera!")
+                App(Screen.MAIN)
             }
         }
     }
 }
 
 @Composable
-fun CameraPreviewContent(
-    viewModel: CameraPreviewViewModel,
-    modifier: Modifier = Modifier,
-    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
-) {
-    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-    val scannedQrCode by viewModel.scannedQrCode.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-
-    LaunchedEffect(lifecycleOwner) {
-        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
-    }
-
-    surfaceRequest?.let { request ->
-        CameraXViewfinder(
-            surfaceRequest = request,
-            modifier = modifier
-        )
-    }
-
-    if (scannedQrCode != null) {
-        QrCodeBottomSheet(
-            scannedQrCode = scannedQrCode!!,
-            onDismiss = viewModel::dismissQrCode
-        )
-    }
-}
-
-
-class CameraPreviewViewModel : ViewModel() {
-    // used to set up a link between the Camera and your UI.
-    private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
-    val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
-
-    private val _scannedQrCode = MutableStateFlow<String?>(null)
-    val scannedQrCode: StateFlow<String?> = _scannedQrCode
-
-    fun onQrCodeDetected(qrCode: String) {
-        if (_scannedQrCode.value == null) {
-            _scannedQrCode.value = qrCode
+fun App(currentScreen: Screen) {
+    when (currentScreen) {
+        Screen.MAIN -> {
+            val viewModel = remember { MainViewModel() }
+            MainScreen(viewModel)
         }
-    }
-
-    fun dismissQrCode() {
-        _scannedQrCode.value = null
-    }
-
-    private val cameraPreviewUseCase = Preview.Builder().build().apply {
-        setSurfaceProvider { newSurfaceRequest ->
-            _surfaceRequest.update { newSurfaceRequest }
-        }
-    }
-
-
-    suspend fun bindToCamera(appContext: Context, lifecycleOwner: LifecycleOwner) {
-        val barcodeScanner = BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build()
-        )
-
-        val imageAnalysisUseCase = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build().apply {
-                val analyzer = MlKitAnalyzer(
-                    listOf(barcodeScanner),
-                    ImageAnalysis.COORDINATE_SYSTEM_ORIGINAL,
-                    ContextCompat.getMainExecutor(appContext)
-                ) { result ->
-
-                    val barcodes = result?.getValue(barcodeScanner)
-
-                    barcodes?.firstOrNull()?.rawValue?.let { qrCode ->
-                        onQrCodeDetected(qrCode)
-                    }
-                }
-                setAnalyzer(ContextCompat.getMainExecutor(appContext)) { imageProxy ->
-                    if (_scannedQrCode.value != null) {
-                        imageProxy.close()  // Skip analysis if locked
-                        return@setAnalyzer
-                    }
-                    analyzer.analyze(imageProxy)
-                }
-            }
-
-        val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
-        processCameraProvider.bindToLifecycle(
-            lifecycleOwner, DEFAULT_BACK_CAMERA, cameraPreviewUseCase, imageAnalysisUseCase
-        )
-
-        // Cancellation signals we're done with the camera
-        try {
-            awaitCancellation()
-        } finally {
-            processCameraProvider.unbindAll()
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun QrCodeBottomSheet(
-    scannedQrCode: String,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
-
-    LaunchedEffect(scannedQrCode) {
-        // Optionally trigger side effects when the QR code changes
-        // TODO: Not sure if this is the right place to trigger business logic, so this might
-        // get refactored. Also I need to debuff the same QR data after sheet is closed
-        // because it feels weird if you point the device towrds the qr click on close but
-        // it opens the sheet immediately. so the same data that was seen last time should not be
-        // handled for e.g. 3 secs.
-        println("Showing bottom sheet for: $scannedQrCode")
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .wrapContentSize(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Scanned QR Code:", style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(scannedQrCode, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onDismiss) {
-                Text("Close")
-            }
+        Screen.SETTINGS -> {
+            // SettingsScreen() – will add this later
         }
     }
 }
