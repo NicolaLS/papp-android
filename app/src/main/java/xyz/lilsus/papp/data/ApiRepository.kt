@@ -24,17 +24,31 @@ class ApiRepository {
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
         private const val PAY_INVOICE_MUTATION = """
-            mutation LnInvoicePaymentSend(${'$'}input: LnInvoicePaymentInput!) {
-              lnInvoicePaymentSend(input: ${'$'}input) {
-                status
-                errors {
-                  message
-                  path
-                  code
-                }
-              }
-            }
-        """
+	mutation LnInvoicePaymentSend(${'$'}input: LnInvoicePaymentInput!) {
+	    lnInvoicePaymentSend(input: ${'$'}input) {
+		errors {
+		    message
+		    path
+		    code
+		}
+		status
+		transaction {
+		    createdAt
+		    direction
+		    id
+		    memo
+		    settlementAmount
+		    settlementCurrency
+		    settlementDisplayAmount
+		    settlementDisplayCurrency
+		    settlementDisplayFee
+		    settlementFee
+		    status
+		}
+
+	    }
+	}
+	"""
     }
 
     suspend fun payInvoice(paymentRequest: String): PayInvoiceResponse =
@@ -87,7 +101,24 @@ data class PayInvoiceData(
 @Serializable
 data class PaymentSendResult(
     val status: String,
-    val errors: List<PaymentError> = emptyList()
+    val errors: List<PaymentError> = emptyList(),
+    val transaction: Transaction,
+)
+
+
+@Serializable
+data class Transaction(
+    val createdAt: Long,
+    val direction: String,
+    val id: String,
+    val memo: String? = null,
+    val settlementAmount: Long,
+    val settlementCurrency: String,
+    val settlementDisplayAmount: String,
+    val settlementDisplayCurrency: String,
+    val settlementDisplayFee: String,
+    val settlementFee: Long,
+    val status: String
 )
 
 @Serializable
