@@ -95,9 +95,9 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-    val scannedQrCode by viewModel.scannedQrCode.collectAsStateWithLifecycle()
+
     val paymentResult by viewModel.paymentResult.collectAsStateWithLifecycle()
-    val isPayingInvoice by viewModel.isPayingInvoice.collectAsStateWithLifecycle()
+    val showBottomSheet by viewModel.showBottomSheet.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
@@ -107,11 +107,9 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
         CameraXViewfinder(surfaceRequest = request, modifier = Modifier.fillMaxSize())
     }
 
-    if (scannedQrCode != null) {
+    if (showBottomSheet) {
         QrCodeBottomSheet(
-            scannedQrCode = scannedQrCode!!,
             paymentResult = paymentResult,
-            isLoading = isPayingInvoice,
             onDismiss = viewModel::dismissQrCode
         )
     }
@@ -141,9 +139,7 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrCodeBottomSheet(
-    scannedQrCode: String,
     paymentResult: PaymentSendPayload?,
-    isLoading: Boolean,
     onDismiss: () -> Unit
 ) {
     val done = remember { mutableStateOf(false) }
@@ -179,7 +175,7 @@ fun QrCodeBottomSheet(
                 .wrapContentSize(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isLoading && paymentResult == null) {
+            if (paymentResult == null) {
                 // TODO: Show spinner while waiting for payment response
                 CircularProgressIndicator()
             } else {

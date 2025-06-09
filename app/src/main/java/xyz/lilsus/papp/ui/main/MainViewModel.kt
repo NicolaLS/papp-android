@@ -27,25 +27,25 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
 
-    private val _scannedQrCode = MutableStateFlow<String?>(null)
-    val scannedQrCode: StateFlow<String?> = _scannedQrCode
+    private var scannedQrCode: String? = null
 
     private val _paymentResult =
         MutableStateFlow<PaymentSendPayload?>(null)   // API response or error message
     val paymentResult: StateFlow<PaymentSendPayload?> = _paymentResult
 
-    private val _isPayingInvoice = MutableStateFlow(false)
-    val isPayingInvoice: StateFlow<Boolean> = _isPayingInvoice
+    private val _showBottomSheet = MutableStateFlow(false)
+    val showBottomSheet: StateFlow<Boolean> = _showBottomSheet
 
     fun onQrCodeDetected(qr: String) {
-        if (_scannedQrCode.value == null && !_isPayingInvoice.value) {
-            _scannedQrCode.value = qr
+        if (scannedQrCode == null) {
+            scannedQrCode = qr
             val bolt11Invoice = Invoice.parseOrNull(qr)
             if (bolt11Invoice != null) {
+                _showBottomSheet.value = true
                 payInvoice(bolt11Invoice)
             } else {
                 // TODO: Debounce
-                _scannedQrCode.value = null
+                scannedQrCode = null
                 println("TODO: not a bolt11 invoice. show hints")
             }
         }
@@ -53,7 +53,6 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
 
     private fun payInvoice(paymentRequest: Invoice) {
         viewModelScope.launch {
-            _isPayingInvoice.value = true
             _paymentResult.value = null
 
             val result = try {
@@ -65,14 +64,14 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
             }
 
             _paymentResult.value = result
-            _isPayingInvoice.value = false
         }
     }
 
 
     fun dismissQrCode() {
-        _scannedQrCode.value = null
+        scannedQrCode = null
         _paymentResult.value = null
+        _showBottomSheet.value = false
     }
 
     private val previewUseCase = Preview.Builder().build().apply {
@@ -101,7 +100,7 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build().apply {
                 setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                    if (_scannedQrCode.value != null) {
+                    if (scannedQrCode != null) {
                         imageProxy.close()
                     } else {
                         analyzer.analyze(imageProxy)
