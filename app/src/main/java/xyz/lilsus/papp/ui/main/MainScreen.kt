@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -55,6 +56,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import xyz.lilsus.papp.data.PaymentSendPayload
+import xyz.lilsus.papp.data.PaymentSendResult
+import xyz.lilsus.papp.data.Transaction
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -138,7 +142,7 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
 @Composable
 fun QrCodeBottomSheet(
     scannedQrCode: String,
-    paymentResult: String?,
+    paymentResult: PaymentSendPayload?,
     isLoading: Boolean,
     onDismiss: () -> Unit
 ) {
@@ -180,13 +184,9 @@ fun QrCodeBottomSheet(
                 CircularProgressIndicator()
             } else {
                 // Handle Payment Result
-                AnimatedCheckmark(modifier = Modifier.size(150.dp))
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    paymentResult!!,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+
+                PaymentResultScreen(paymentResult)
+
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(onClick = onDismiss) {
                     Text("Close")
@@ -253,6 +253,51 @@ fun AnimatedCheckmark(modifier: Modifier = Modifier) {
                 cap = StrokeCap.Round,
                 join = StrokeJoin.Round
             )
+        )
+    }
+}
+
+@Composable
+fun PaymentResultScreen(payload: PaymentSendPayload?) {
+    if (payload == null) {
+        // TODO
+        return
+    }
+    when (payload.status) {
+        PaymentSendResult.ALREADY_PAID -> TODO()
+        PaymentSendResult.FAILURE -> TODO()
+        PaymentSendResult.PENDING -> TODO()
+        PaymentSendResult.SUCCESS -> PaymentSuccess(payload.transaction)
+        null -> TODO()
+    }
+}
+
+@Composable
+fun PaymentSuccess(transaction: Transaction?) {
+    val amountPaid = transaction?.settlementDisplayAmount
+        ?.let { "%.2f".format(kotlin.math.abs(it)) } ?: "N/A"
+    val feePaid = transaction?.settlementDisplayFee?.toString() ?: "N/A"
+    val displayCurrency = transaction?.settlementDisplayCurrency ?: ""
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AnimatedCheckmark(modifier = Modifier.size(150.dp))
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = "$amountPaid $displayCurrency",
+            style = MaterialTheme.typography.displaySmall,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Fee $feePaid $displayCurrency",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

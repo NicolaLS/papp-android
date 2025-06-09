@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.data.ApiRepository
+import xyz.lilsus.papp.data.PaymentSendPayload
 
 class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
@@ -28,8 +29,9 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
     private val _scannedQrCode = MutableStateFlow<String?>(null)
     val scannedQrCode: StateFlow<String?> = _scannedQrCode
 
-    private val _paymentResult = MutableStateFlow<String?>(null)   // API response or error message
-    val paymentResult: StateFlow<String?> = _paymentResult
+    private val _paymentResult =
+        MutableStateFlow<PaymentSendPayload?>(null)   // API response or error message
+    val paymentResult: StateFlow<PaymentSendPayload?> = _paymentResult
 
     private val _isPayingInvoice = MutableStateFlow(false)
     val isPayingInvoice: StateFlow<Boolean> = _isPayingInvoice
@@ -49,12 +51,16 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
         viewModelScope.launch {
             _isPayingInvoice.value = true
             _paymentResult.value = null
+
             val result = try {
                 apiRepository.payInvoice(paymentRequest)
             } catch (e: Exception) {
-                "Payment error: ${e.message}"
+                println("Payment error: ${e.message}")
+                // FIXME: error should not be null result
+                null
             }
-            _paymentResult.value = result.toString()
+
+            _paymentResult.value = result
             _isPayingInvoice.value = false
         }
     }
