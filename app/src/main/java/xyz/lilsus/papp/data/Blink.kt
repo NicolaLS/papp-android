@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import xyz.lilsus.papp.util.ApiConstants
+import xyz.lilsus.papp.util.Invoice
 import java.io.IOException
 
 // FIXME: https://github.com/NicolaLS/papp-android/issues/11
@@ -108,12 +109,12 @@ class BlinkClient {
 	"""
     }
 
-    suspend fun payInvoice(paymentRequest: String): PaymentSendPayload =
+    suspend fun payInvoice(paymentRequest: Invoice): PaymentSendPayload =
         withContext(Dispatchers.IO) {
             // Build variables JSON object
             val variables = buildJsonObject {
                 putJsonObject("input") {
-                    put("paymentRequest", paymentRequest)
+                    put("paymentRequest", paymentRequest.encodedSafe)
                     put("walletId", ApiConstants.WALLET_ID)
                 }
             }

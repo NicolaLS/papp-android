@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.data.ApiRepository
 import xyz.lilsus.papp.data.PaymentSendPayload
+import xyz.lilsus.papp.util.Invoice
 
 class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
@@ -39,15 +40,18 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
     fun onQrCodeDetected(qr: String) {
         if (_scannedQrCode.value == null && !_isPayingInvoice.value) {
             _scannedQrCode.value = qr
-            // TODO: only attempt to pay ln invoices or bitcoin:xxx?ln=xxx
-            // TODO: because blink does not respond with amount paid, we'll need to
-            // parse the invoice and remember the amount -.-
-            // try to get them to respond with amount paid and fee paid
-            payInvoice(qr)
+            val bolt11Invoice = Invoice.parseOrNull(qr)
+            if (bolt11Invoice != null) {
+                payInvoice(bolt11Invoice)
+            } else {
+                // TODO: Debounce
+                _scannedQrCode.value = null
+                println("TODO: not a bolt11 invoice. show hints")
+            }
         }
     }
 
-    private fun payInvoice(paymentRequest: String) {
+    private fun payInvoice(paymentRequest: Invoice) {
         viewModelScope.launch {
             _isPayingInvoice.value = true
             _paymentResult.value = null
