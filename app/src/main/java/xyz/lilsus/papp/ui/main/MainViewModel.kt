@@ -19,10 +19,12 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.data.ApiRepository
-import xyz.lilsus.papp.data.PaymentSendPayload
+import xyz.lilsus.papp.data.ConnectedWallets
+import xyz.lilsus.papp.data.WalletPaymentSendResult
+import xyz.lilsus.papp.util.Bolt11Invoice
 
-class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
+class MainViewModel(private val apiRepository: ConnectedWallets = ConnectedWallets()) :
+    ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
 
@@ -30,38 +32,39 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
     val scannedQrCode: StateFlow<String?> = _scannedQrCode
 
     private val _paymentResult =
-        MutableStateFlow<PaymentSendPayload?>(null)   // API response or error message
-    val paymentResult: StateFlow<PaymentSendPayload?> = _paymentResult
+        MutableStateFlow<WalletPaymentSendResult?>(null)   // API response or error message
+    val paymentResult: StateFlow<WalletPaymentSendResult?> = _paymentResult
 
-    private val _isPayingInvoice = MutableStateFlow(false)
-    val isPayingInvoice: StateFlow<Boolean> = _isPayingInvoice
+    private val _showBottomSheet = MutableStateFlow(false)
+    val showBottomSheet: StateFlow<Boolean> = _showBottomSheet
 
     fun onQrCodeDetected(qr: String) {
-        if (_scannedQrCode.value == null && !_isPayingInvoice.value) {
+        if (_scannedQrCode.value == null) {
             _scannedQrCode.value = qr
             // TODO: only attempt to pay ln invoices or bitcoin:xxx?ln=xxx
             // TODO: because blink does not respond with amount paid, we'll need to
             // parse the invoice and remember the amount -.-
             // try to get them to respond with amount paid and fee paid
-            payInvoice(qr)
+            val bolt11Invoice = Bolt11Invoice.parseOrNull(qr)
+            if (bolt11Invoice != null) {
+                _showBottomSheet.value = true
+                payInvoice(bolt11Invoice)
+            } else {
+                // TODO: Debounce
+                _scannedQrCode.value = null
+                println("TODO: not a bolt11 invoice. show hints")
+            }
+
         }
     }
 
-    private fun payInvoice(paymentRequest: String) {
+    private fun payInvoice(bolt11Invoice: Bolt11Invoice) {
         viewModelScope.launch {
-            _isPayingInvoice.value = true
             _paymentResult.value = null
 
-            val result = try {
-                apiRepository.payInvoice(paymentRequest)
-            } catch (e: Exception) {
-                println("Payment error: ${e.message}")
-                // FIXME: error should not be null result
-                null
-            }
+            val result = apiRepository.payBolt11(bolt11Invoice)
 
             _paymentResult.value = result
-            _isPayingInvoice.value = false
         }
     }
 
@@ -69,6 +72,7 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
     fun dismissQrCode() {
         _scannedQrCode.value = null
         _paymentResult.value = null
+        _showBottomSheet.value = false
     }
 
     private val previewUseCase = Preview.Builder().build().apply {

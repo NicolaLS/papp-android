@@ -19,6 +19,7 @@ import java.io.IOException
 // Blink GraphQL API doc: https://dev.blink.sv/public-api-reference.html#mutation-lnInvoicePaymentSend
 // Don't use GraphQL client because it is not worth it.
 
+@Serializable
 enum class PaymentSendResult {
     ALREADY_PAID,
     FAILURE,
@@ -108,7 +109,7 @@ class BlinkClient {
 	"""
     }
 
-    suspend fun payInvoice(paymentRequest: String): PaymentSendPayload =
+    suspend fun lnInvoicePaymentSend(paymentRequest: String): PaymentSendPayload =
         withContext(Dispatchers.IO) {
             // Build variables JSON object
             val variables = buildJsonObject {

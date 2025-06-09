@@ -56,9 +56,8 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import xyz.lilsus.papp.data.PaymentSendPayload
-import xyz.lilsus.papp.data.PaymentSendResult
-import xyz.lilsus.papp.data.Transaction
+import xyz.lilsus.papp.data.WalletPaymentSendResponse
+import xyz.lilsus.papp.data.WalletPaymentSendResult
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -95,9 +94,8 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-    val scannedQrCode by viewModel.scannedQrCode.collectAsStateWithLifecycle()
     val paymentResult by viewModel.paymentResult.collectAsStateWithLifecycle()
-    val isPayingInvoice by viewModel.isPayingInvoice.collectAsStateWithLifecycle()
+    val showBottomSheet by viewModel.showBottomSheet.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
@@ -107,11 +105,9 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
         CameraXViewfinder(surfaceRequest = request, modifier = Modifier.fillMaxSize())
     }
 
-    if (scannedQrCode != null) {
+    if (showBottomSheet) {
         QrCodeBottomSheet(
-            scannedQrCode = scannedQrCode!!,
             paymentResult = paymentResult,
-            isLoading = isPayingInvoice,
             onDismiss = viewModel::dismissQrCode
         )
     }
@@ -141,9 +137,7 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrCodeBottomSheet(
-    scannedQrCode: String,
-    paymentResult: PaymentSendPayload?,
-    isLoading: Boolean,
+    paymentResult: WalletPaymentSendResult?,
     onDismiss: () -> Unit
 ) {
     val done = remember { mutableStateOf(false) }
@@ -179,7 +173,7 @@ fun QrCodeBottomSheet(
                 .wrapContentSize(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isLoading && paymentResult == null) {
+            if (paymentResult == null) {
                 // TODO: Show spinner while waiting for payment response
                 CircularProgressIndicator()
             } else {
@@ -258,27 +252,16 @@ fun AnimatedCheckmark(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PaymentResultScreen(payload: PaymentSendPayload?) {
-    if (payload == null) {
-        // TODO
-        return
-    }
-    when (payload.status) {
-        PaymentSendResult.ALREADY_PAID -> TODO()
-        PaymentSendResult.FAILURE -> TODO()
-        PaymentSendResult.PENDING -> TODO()
-        PaymentSendResult.SUCCESS -> PaymentSuccess(payload.transaction)
+fun PaymentResultScreen(result: WalletPaymentSendResult?) {
+    when (result) {
+        is WalletPaymentSendResult.Error -> TODO()
+        is WalletPaymentSendResult.Success -> PaymentSuccess(result.meta)
         null -> TODO()
     }
 }
 
 @Composable
-fun PaymentSuccess(transaction: Transaction?) {
-    val amountPaid = transaction?.settlementDisplayAmount
-        ?.let { "%.2f".format(kotlin.math.abs(it)) } ?: "N/A"
-    val feePaid = transaction?.settlementDisplayFee?.toString() ?: "N/A"
-    val displayCurrency = transaction?.settlementDisplayCurrency ?: ""
-
+fun PaymentSuccess(meta: WalletPaymentSendResponse) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -288,13 +271,13 @@ fun PaymentSuccess(transaction: Transaction?) {
         AnimatedCheckmark(modifier = Modifier.size(150.dp))
         Spacer(Modifier.height(24.dp))
         Text(
-            text = "$amountPaid $displayCurrency",
+            text = "${meta.displayAmountPaid} ${meta.displayCurrency}",
             style = MaterialTheme.typography.displaySmall,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "Fee $feePaid $displayCurrency",
+            text = "Fee ${meta.displayFeePaid} ${meta.displayCurrency}",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant

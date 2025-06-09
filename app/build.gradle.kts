@@ -77,4 +77,8 @@ dependencies {
     // Kotlinx Serialization (Core + JSON)
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.kotlinx.serialization.json)
+
+    // BOLT11
+    implementation("app.cash.lninvoice:ln-invoice:0.0.1")
+    implementation(libs.arrow.core.jvm)
 }
