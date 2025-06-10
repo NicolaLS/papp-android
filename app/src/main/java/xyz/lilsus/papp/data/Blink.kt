@@ -21,12 +21,7 @@ import java.io.IOException
 // Don't use GraphQL client because it is not worth it.
 
 @Serializable
-enum class PaymentSendResult {
-    ALREADY_PAID,
-    FAILURE,
-    PENDING,
-    SUCCESS,
-}
+enum class PaymentSendResult { ALREADY_PAID, FAILURE, PENDING, SUCCESS, }
 
 @Serializable
 enum class TxDirection { RECEIVE, SEND }
@@ -34,9 +29,6 @@ enum class TxDirection { RECEIVE, SEND }
 @Serializable
 enum class TxStatus { FAILURE, PENDING, SUCCESS }
 
-// TODO: After issue #11 is addressed:
-// - Use Bitcoin amounts only
-// - Let users configure fiat in the app for the display
 @Serializable
 data class Transaction(
     val direction: TxDirection,
@@ -49,8 +41,6 @@ data class Transaction(
 
 @Serializable
 data class Error(
-    // FIXME: Error code's don't seem to be reliable...
-    // only use PaymentSendResult to decide what to do for now.
     val code: String? = null,
     val message: String,
     val path: List<String>? = emptyList()
@@ -74,7 +64,6 @@ private data class PayInvoiceData(
 )
 
 class BlinkClient {
-
     private val client = OkHttpClient()
     val json = Json { ignoreUnknownKeys = true }
 
