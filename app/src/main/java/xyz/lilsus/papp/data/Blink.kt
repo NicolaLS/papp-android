@@ -20,6 +20,7 @@ import java.io.IOException
 // Blink GraphQL API doc: https://dev.blink.sv/public-api-reference.html#mutation-lnInvoicePaymentSend
 // Don't use GraphQL client because it is not worth it.
 
+@Serializable
 enum class PaymentSendResult {
     ALREADY_PAID,
     FAILURE,
