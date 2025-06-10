@@ -56,9 +56,8 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import xyz.lilsus.papp.data.PaymentSendPayload
-import xyz.lilsus.papp.data.PaymentSendResult
-import xyz.lilsus.papp.data.Transaction
+import xyz.lilsus.papp.data.model.WalletPaymentSendResponse
+import xyz.lilsus.papp.data.model.WalletResult
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -139,7 +138,7 @@ fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrCodeBottomSheet(
-    paymentResult: PaymentSendPayload?,
+    paymentResult: WalletResult<WalletPaymentSendResponse>?,
     onDismiss: () -> Unit
 ) {
     val done = remember { mutableStateOf(false) }
@@ -180,7 +179,6 @@ fun QrCodeBottomSheet(
                 CircularProgressIndicator()
             } else {
                 // Handle Payment Result
-
                 PaymentResultScreen(paymentResult)
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -254,11 +252,8 @@ fun AnimatedCheckmark(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PaymentResultScreen(payload: PaymentSendPayload?) {
-    if (payload == null) {
-        // TODO
-        return
-    }
+fun PaymentResultScreen(result: WalletResult<WalletPaymentSendResponse>) {
+    /*
     when (payload.status) {
         PaymentSendResult.ALREADY_PAID -> TODO()
         PaymentSendResult.FAILURE -> TODO()
@@ -266,15 +261,16 @@ fun PaymentResultScreen(payload: PaymentSendPayload?) {
         PaymentSendResult.SUCCESS -> PaymentSuccess(payload.transaction)
         null -> TODO()
     }
+     */
+    when (result) {
+        is WalletResult.Failure -> TODO()
+        // FIXME: Is casting here okay ?
+        is WalletResult.Success<*> -> PaymentSuccess(result.value as WalletPaymentSendResponse)
+    }
 }
 
 @Composable
-fun PaymentSuccess(transaction: Transaction?) {
-    val amountPaid = transaction?.settlementDisplayAmount
-        ?.let { "%.2f".format(kotlin.math.abs(it)) } ?: "N/A"
-    val feePaid = transaction?.settlementDisplayFee?.toString() ?: "N/A"
-    val displayCurrency = transaction?.settlementDisplayCurrency ?: ""
-
+fun PaymentSuccess(res: WalletPaymentSendResponse) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -284,13 +280,13 @@ fun PaymentSuccess(transaction: Transaction?) {
         AnimatedCheckmark(modifier = Modifier.size(150.dp))
         Spacer(Modifier.height(24.dp))
         Text(
-            text = "$amountPaid $displayCurrency",
+            text = "${res.displayAmountPaid} ${res.displayCurrency}",
             style = MaterialTheme.typography.displaySmall,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "Fee $feePaid $displayCurrency",
+            text = "Fee ${res.displayFeePaid} ${res.displayCurrency}",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -19,22 +19,29 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.data.ApiRepository
-import xyz.lilsus.papp.data.PaymentSendPayload
+import xyz.lilsus.papp.data.model.WalletError
+import xyz.lilsus.papp.data.model.WalletPaymentSendResponse
+import xyz.lilsus.papp.data.model.WalletResult
+import xyz.lilsus.papp.data.repository.ConnectedWalletRepository
 import xyz.lilsus.papp.util.Invoice
 
-class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
+// TODO: Probably better to put the wallet repository in constructor!
+class MainViewModel() : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
 
     private var scannedQrCode: String? = null
 
     private val _paymentResult =
-        MutableStateFlow<PaymentSendPayload?>(null)   // API response or error message
-    val paymentResult: StateFlow<PaymentSendPayload?> = _paymentResult
+        MutableStateFlow<WalletResult<WalletPaymentSendResponse>?>(null)   // API response or error message
+    val paymentResult: StateFlow<WalletResult<WalletPaymentSendResponse>?> = _paymentResult
 
     private val _showBottomSheet = MutableStateFlow(false)
     val showBottomSheet: StateFlow<Boolean> = _showBottomSheet
+
+    val wallet = ConnectedWalletRepository.Builder()
+        .withBlink()
+        .build()
 
     fun onQrCodeDetected(qr: String) {
         if (scannedQrCode == null) {
@@ -56,7 +63,15 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
             _paymentResult.value = null
 
             val result = try {
-                apiRepository.payInvoice(paymentRequest)
+                val results: List<WalletResult<WalletPaymentSendResponse>> =
+                    wallet.payBolt11(paymentRequest)
+                // FIXME: this is weird
+                val first = results.firstOrNull()
+                if (first == null) {
+                    // Map to error
+                    WalletResult.Failure(WalletError.Unexpected("No wallet responded"))
+                }
+                first
             } catch (e: Exception) {
                 println("Payment error: ${e.message}")
                 // FIXME: error should not be null result
