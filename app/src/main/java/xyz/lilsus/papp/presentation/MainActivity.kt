@@ -1,4 +1,4 @@
-package xyz.lilsus.papp
+package xyz.lilsus.papp.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,9 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import xyz.lilsus.papp.ui.main.MainScreen
-import xyz.lilsus.papp.ui.main.MainViewModel
-import xyz.lilsus.papp.ui.settings.SettingsScreen
+import xyz.lilsus.papp.data.repository.WalletRepositoryImpl
+import xyz.lilsus.papp.domain.use_case.pay.PayInvoiceUseCase
+import xyz.lilsus.papp.presentation.main.MainScreen
+import xyz.lilsus.papp.presentation.main.MainViewModel
+import xyz.lilsus.papp.presentation.settings.SettingsScreen
 
 enum class Screen {
     MAIN, SETTINGS
@@ -37,7 +39,9 @@ fun App() {
 
     when (currentScreen) {
         Screen.MAIN -> {
-            val viewModel = remember { MainViewModel() }
+            val walletRepository = WalletRepositoryImpl()
+            val payUseCase = PayInvoiceUseCase(walletRepository)
+            val viewModel = remember { MainViewModel(payUseCase) }
             MainScreen(
                 viewModel,
                 onSettingsClick = { currentScreen = Screen.SETTINGS }

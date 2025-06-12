@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.ui.theme
+package xyz.lilsus.papp.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.ui.settings
+package xyz.lilsus.papp.presentation.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

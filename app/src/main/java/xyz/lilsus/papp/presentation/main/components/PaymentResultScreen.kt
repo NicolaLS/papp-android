@@ -1,0 +1,85 @@
+package xyz.lilsus.papp.presentation.main.components
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import xyz.lilsus.papp.domain.model.SendPaymentResult
+
+@Composable
+fun PaymentResultScreen(result: SendPaymentResult) {
+    when (result) {
+        is SendPaymentResult.Success -> {
+            PaymentSuccessLayout(
+                title = "${result.data.amountPaid} SAT",
+                subtitle = "Fee ${result.data.feePaid} SAT",
+                memo = result.data.memo
+            )
+        }
+
+        is SendPaymentResult.AlreadyPaid -> {
+            PaymentSuccessLayout(
+                title = "Invoice already paid"
+            )
+        }
+
+        is SendPaymentResult.Pending -> {
+            PaymentSuccessLayout(
+                title = "Payment is pending..."
+            )
+        }
+
+        is SendPaymentResult.Failure -> {
+            PaymentError(message = result.message)
+        }
+    }
+}
+
+@Composable
+private fun PaymentSuccessLayout(
+    title: String,
+    subtitle: String? = null,
+    memo: String? = null
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AnimatedCheckmark(modifier = Modifier.size(150.dp))
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.displaySmall,
+            textAlign = TextAlign.Center
+        )
+        subtitle?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        memo?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
