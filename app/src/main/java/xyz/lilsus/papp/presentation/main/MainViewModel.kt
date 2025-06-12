@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.ui.main
+package xyz.lilsus.papp.presentation.main
 
 import android.content.Context
 import androidx.camera.core.CameraSelector
@@ -8,6 +8,8 @@ import androidx.camera.core.SurfaceRequest
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.camera.mlkit.vision.MlKitAnalyzer
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -18,31 +20,38 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import xyz.lilsus.papp.data.ApiRepository
-import xyz.lilsus.papp.data.PaymentSendPayload
-import xyz.lilsus.papp.util.Invoice
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.SendPaymentResult
+import xyz.lilsus.papp.domain.use_case.pay.PayInvoiceUseCase
 
-class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) : ViewModel() {
+
+sealed class PaymentUiState {
+    object Idle : PaymentUiState()
+    object Loading : PaymentUiState()
+    data class Received(val result: SendPaymentResult) : PaymentUiState()
+    data class Error(val message: String?) : PaymentUiState()
+}
+
+// TODO: DI with Hilt
+class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
 
     private var scannedQrCode: String? = null
 
-    private val _paymentResult =
-        MutableStateFlow<PaymentSendPayload?>(null)   // API response or error message
-    val paymentResult: StateFlow<PaymentSendPayload?> = _paymentResult
+    private val _uiState = mutableStateOf<PaymentUiState>(PaymentUiState.Idle)
+    val uiState: State<PaymentUiState> = _uiState
 
-    private val _showBottomSheet = MutableStateFlow(false)
-    val showBottomSheet: StateFlow<Boolean> = _showBottomSheet
 
     fun onQrCodeDetected(qr: String) {
         if (scannedQrCode == null) {
             scannedQrCode = qr
             val bolt11Invoice = Invoice.parseOrNull(qr)
             if (bolt11Invoice != null) {
-                _showBottomSheet.value = true
-                payInvoice(bolt11Invoice)
+                pay(bolt11Invoice)
             } else {
                 // TODO: Debounce
                 scannedQrCode = null
@@ -51,27 +60,19 @@ class MainViewModel(private val apiRepository: ApiRepository = ApiRepository()) 
         }
     }
 
-    private fun payInvoice(paymentRequest: Invoice) {
-        viewModelScope.launch {
-            _paymentResult.value = null
-
-            val result = try {
-                apiRepository.payInvoice(paymentRequest)
-            } catch (e: Exception) {
-                println("Payment error: ${e.message}")
-                // FIXME: error should not be null result
-                null
+    fun pay(invoice: Invoice) {
+        payUseCase.execute(invoice).onEach { result ->
+            _uiState.value = when (result) {
+                is Resource.Loading -> PaymentUiState.Loading
+                is Resource.Success -> PaymentUiState.Received(result.data!!)
+                is Resource.Error -> PaymentUiState.Error(result.message?.toString())
             }
-
-            _paymentResult.value = result
-        }
+        }.launchIn(viewModelScope)
     }
 
-
-    fun dismissQrCode() {
+    fun reset() {
+        _uiState.value = PaymentUiState.Idle
         scannedQrCode = null
-        _paymentResult.value = null
-        _showBottomSheet.value = false
     }
 
     private val previewUseCase = Preview.Builder().build().apply {

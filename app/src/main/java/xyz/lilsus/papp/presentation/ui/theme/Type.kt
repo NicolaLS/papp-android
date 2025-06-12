@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.ui.theme
+package xyz.lilsus.papp.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.util
+package xyz.lilsus.papp.common
 
 import app.cash.lninvoice.InvalidInvoice
 import app.cash.lninvoice.PaymentRequest
