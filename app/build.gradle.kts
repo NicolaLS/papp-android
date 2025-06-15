@@ -81,4 +81,7 @@ dependencies {
     // BOLT11
     implementation(libs.ln.invoice)
     implementation(libs.arrow.core.jvm)
+
+    // Icons, make sure to use R8/Proguard to strip unused icons.
+    implementation(libs.androidx.material.icons.core)
 }

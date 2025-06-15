@@ -2,10 +2,6 @@
 agp = "8.10.1"
 arrowCoreJvm = "1.2.0"
 barcodeScanning = "17.3.0"
-cameraCamera2 = "1.5.0-beta01"
-cameraCompose = "1.5.0-beta01"
-cameraCore = "1.5.0-beta01"
-cameraLifecycle = "1.5.0-beta01"
 cameraMlkitVision = "1.4.2"
 kotlin = "2.0.21"
 coreKtx = "1.16.0"
@@ -13,7 +9,7 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 kotlinxSerializationCore = "1.7.3"
-kotlinxSerializationJson = "1.5.1"
+kotlinxSerializationJson = "1.7.3"
 lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
 composeBom = "2025.06.00"
@@ -21,6 +17,7 @@ camerax = "1.5.0-beta01"
 accompanist = "0.37.2"
 lnInvoice = "0.0.1"
 okhttp = "4.12.0"
+material3 = "1.4.0-alpha15"
 
 [libraries]
 # Contains the basic camera functionality such as SurfaceRequest
@@ -35,6 +32,7 @@ androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.r
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 androidx-camera-mlkit-vision = { module = "androidx.camera:camera-mlkit-vision", version.ref = "cameraMlkitVision" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 arrow-core-jvm = { module = "io.arrow-kt:arrow-core-jvm", version.ref = "arrowCoreJvm" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -49,7 +47,7 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 ln-invoice = { module = "app.cash.lninvoice:ln-invoice", version.ref = "lnInvoice" }
