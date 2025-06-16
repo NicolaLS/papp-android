@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "1.9.10"
+    alias(libs.plugins.protobuf)
 }
 
 android {
@@ -37,6 +38,24 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.31.1"
+    }
+    // Generates the java Protobuf-lite code for the Protobufs in this project. See
+    // https://github.com/google/protobuf-gradle-plugin#customizing-protobuf-compilation
+    // for more information.
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
     }
 }
 
@@ -84,4 +103,8 @@ dependencies {
 
     // Icons, make sure to use R8/Proguard to strip unused icons.
     implementation(libs.androidx.material.icons.core)
+
+    // DataStore
+    implementation(libs.protobuf.javalite)
+    implementation(libs.androidx.datastore)
 }

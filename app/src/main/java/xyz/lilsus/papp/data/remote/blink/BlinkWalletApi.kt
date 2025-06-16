@@ -14,16 +14,19 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.IntoSendPaymentResult
 import xyz.lilsus.papp.domain.repository.WalletApi
-import xyz.lilsus.papp.util.ApiConstants
+import xyz.lilsus.papp.proto.wallet_config.BlinkWalletConfig
 
 // FIXME: https://github.com/NicolaLS/papp-android/issues/11
 
 // Blink GraphQL API doc: https://dev.blink.sv/public-api-reference.html#mutation-lnInvoicePaymentSend
 // Don't use GraphQL client because it is not worth it.
 
-class BlinkWalletApi : WalletApi {
+class BlinkWalletApi(config: BlinkWalletConfig) : WalletApi {
     private val client = OkHttpClient()
     val json = Json { ignoreUnknownKeys = true }
+
+    private val walletId = config.walletId
+    private val decryptedApiKey = config.apiKey
 
     companion object {
         private const val GRAPHQL_URL = "https://api.blink.sv/graphql"
@@ -62,7 +65,7 @@ class BlinkWalletApi : WalletApi {
             val variables = buildJsonObject {
                 putJsonObject("input") {
                     put("paymentRequest", invoice.encodedSafe)
-                    put("walletId", ApiConstants.WALLET_ID)
+                    put("walletId", walletId)
                 }
             }
 
@@ -76,7 +79,7 @@ class BlinkWalletApi : WalletApi {
             val request = Request.Builder()
                 .url(GRAPHQL_URL)
                 .post(requestBody)
-                .addHeader("X-API-KEY", ApiConstants.API_KEY)
+                .addHeader("X-API-KEY", decryptedApiKey)
                 .build()
 
             client.newCall(request).execute().use { response ->
