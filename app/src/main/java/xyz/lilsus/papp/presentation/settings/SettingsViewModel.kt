@@ -1,90 +1,90 @@
 package xyz.lilsus.papp.presentation.settings
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.data.repository.WalletRepositoryImpl
-import xyz.lilsus.papp.proto.wallet_config.BlinkWalletConfig
-import xyz.lilsus.papp.proto.wallet_config.WalletConfig
-import xyz.lilsus.papp.proto.wallet_config.WalletType
+import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.config.AddWalletEntry
+import xyz.lilsus.papp.domain.model.config.WalletEntry
+import xyz.lilsus.papp.domain.use_case.wallets.config.AddWalletUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.config.GetActiveWalletUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.config.GetAllWalletsUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.config.RemoveWalletUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.config.SetActiveWalletUseCase
+
+sealed class WalletOption {
+    data class Wallet(val entry: WalletEntry) : WalletOption()
+    object None : WalletOption()
+}
+
 
 class SettingsViewModel(
-    private val walletRepository: WalletRepositoryImpl
+    getAllWallets: GetAllWalletsUseCase,
+    getActiveWallet: GetActiveWalletUseCase,
+    private val setActiveWallet: SetActiveWalletUseCase,
+    private val removeWallet: RemoveWalletUseCase,
+    private val addWallet: AddWalletUseCase
 ) : ViewModel() {
+    val allWallets = getAllWallets().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), Resource.Loading()
+    )
 
-    private val _apiKey = MutableStateFlow("")
-    val apiKey: StateFlow<String> = _apiKey
+    val activeWallet = getActiveWallet().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), Resource.Loading()
+    )
 
-    private val _walletId = MutableStateFlow("")
-    val walletId: StateFlow<String> = _walletId
+    val selectedWallet: StateFlow<WalletOption> = activeWallet.map { resource ->
+        when (resource) {
+            is Resource.Success -> {
+                resource.data?.let { WalletOption.Wallet(it) } ?: WalletOption.None
+            }
 
-    private val _statusMessage = MutableStateFlow("Not connected")
-    val statusMessage: StateFlow<String> = _statusMessage
+            else -> WalletOption.None
+        }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        WalletOption.None
+    )
 
-    private val _isConnected = MutableStateFlow(false)
-    val isConnected: StateFlow<Boolean> = _isConnected
+    var showWalletTypeModal by mutableStateOf(false)
 
-    init {
+    fun onWalletSelected(selection: WalletOption) {
         viewModelScope.launch {
-            walletRepository.walletConfigFlow.collect { config ->
-                if (config.activeWalletType == WalletType.WALLET_TYPE_BLINK) {
-                    val blink = config.blinkWallet
-                    // Only update if values differ (avoid overwriting in-progress edits)
-                    if (_apiKey.value != blink.apiKey) _apiKey.value = blink.apiKey
-                    if (_walletId.value != blink.walletId) _walletId.value = blink.walletId
-                    _statusMessage.value = "Connected"
-                    _isConnected.value = true
-                } else {
-                    if (_apiKey.value.isNotEmpty()) _apiKey.value = ""
-                    if (_walletId.value.isNotEmpty()) _walletId.value = ""
-                    _statusMessage.value = "Not connected"
-                    _isConnected.value = false
+            when (selection) {
+                WalletOption.None -> setActiveWallet(null)
+                is WalletOption.Wallet -> setActiveWallet(selection.entry.key)
+            }
+        }
+    }
+
+    fun onRemoveSelected() {
+        when (val selection = selectedWallet.value) {
+            WalletOption.None -> {}
+            is WalletOption.Wallet -> {
+                viewModelScope.launch {
+                    removeWallet(selection.entry.key)
                 }
             }
         }
     }
 
-
-    fun onApiKeyChange(newKey: String) {
-        _apiKey.value = newKey
+    fun onAddWalletClicked() {
+        showWalletTypeModal = true
     }
 
-    fun onWalletIdChange(newId: String) {
-        _walletId.value = newId
-    }
-
-    fun connectBlinkWallet() {
-        val config = WalletConfig.newBuilder()
-            .setActiveWalletType(WalletType.WALLET_TYPE_BLINK)
-            .setBlinkWallet(
-                BlinkWalletConfig.newBuilder()
-                    .setApiKey(_apiKey.value)
-                    .setWalletId(_walletId.value)
-                    .build()
-            )
-            .build()
-
+    fun connectWallet(wallet: AddWalletEntry) {
         viewModelScope.launch {
-            try {
-                walletRepository.updateWalletConfig(config)
-                _statusMessage.value = "Connected"
-            } catch (e: Exception) {
-                _statusMessage.value = "Error: ${e.message}"
-            }
-        }
-    }
+            addWallet(wallet)
+            showWalletTypeModal = false
 
-    fun disconnectWallet() {
-        val config = WalletConfig.getDefaultInstance()  // resets to no wallet configured
-        viewModelScope.launch {
-            try {
-                walletRepository.updateWalletConfig(config)
-                _statusMessage.value = "Not connected"
-            } catch (e: Exception) {
-                _statusMessage.value = "Error: ${e.message}"
-            }
         }
     }
 }

@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.onEach
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentResult
-import xyz.lilsus.papp.domain.use_case.pay.PayInvoiceUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 
 
 sealed class PaymentUiState {

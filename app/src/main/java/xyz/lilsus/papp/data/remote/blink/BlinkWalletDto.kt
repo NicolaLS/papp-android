@@ -1,10 +1,10 @@
 package xyz.lilsus.papp.data.remote.blink
 
 import kotlinx.serialization.Serializable
-import xyz.lilsus.papp.common.Wallet
 import xyz.lilsus.papp.domain.model.IntoSendPaymentResult
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.SendPaymentResult
+import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import kotlin.math.abs
 
 @Serializable
@@ -49,7 +49,7 @@ data class PayInvoiceResponse(
     val data: PayInvoiceData
 ) : IntoSendPaymentResult {
     override fun interpretWalletDto(): SendPaymentResult {
-        val wallet = Wallet.BLINK
+        val wallet = WalletTypeEntry.BLINK
         val payload = data.lnInvoicePaymentSend
         val status =
             payload.status ?: return SendPaymentResult.Failure(wallet, "Missing payment status")

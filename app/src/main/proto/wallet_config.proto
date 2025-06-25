@@ -3,16 +3,22 @@ syntax = "proto3";
 option java_package = "xyz.lilsus.papp.proto.wallet_config";
 option java_multiple_files = true;
 
-enum WalletType {
-    WALLET_TYPE_NONE = 0;
-    WALLET_TYPE_BLINK = 1;
+message WalletConfigStore {
+    map<string, Wallet> wallets = 1;
+    string active_wallet_key = 2;
+}
+message Wallet {
+    // Wallet Alias e.g "Blink Personal".
+    string alias = 1;
+    // Wallet configuration data
+    WalletConfig config = 3;
 }
 
 message WalletConfig {
-    WalletType active_wallet_type = 1;
-
-    BlinkWalletConfig blink_wallet = 2;
-    // TODO: Add more wallets here
+    oneof config {
+        BlinkWalletConfig blink = 2;
+        // Add future wallet configs here
+    }
 }
 
 message BlinkWalletConfig {
