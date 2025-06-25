@@ -1,6 +1,6 @@
 package xyz.lilsus.papp.domain.model
 
-import xyz.lilsus.papp.common.Wallet
+import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 
 interface IntoSendPaymentResult {
     fun interpretWalletDto(): SendPaymentResult
@@ -12,11 +12,9 @@ data class SendPaymentData(
     val memo: String?,
 )
 
-sealed class SendPaymentResult(
-    val wallet: Wallet
-) {
-    class Success(wallet: Wallet, val data: SendPaymentData) : SendPaymentResult(wallet)
-    class AlreadyPaid(wallet: Wallet) : SendPaymentResult(wallet)
-    class Pending(wallet: Wallet) : SendPaymentResult(wallet)
-    class Failure(wallet: Wallet, val message: String) : SendPaymentResult(wallet)
+sealed class SendPaymentResult {
+    class Success(wallet: WalletTypeEntry, val data: SendPaymentData) : SendPaymentResult()
+    class AlreadyPaid(wallet: WalletTypeEntry) : SendPaymentResult()
+    class Pending(wallet: WalletTypeEntry) : SendPaymentResult()
+    class Failure(wallet: WalletTypeEntry, val message: String) : SendPaymentResult()
 }

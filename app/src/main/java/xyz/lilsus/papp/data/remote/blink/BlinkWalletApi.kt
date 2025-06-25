@@ -13,15 +13,15 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.IntoSendPaymentResult
-import xyz.lilsus.papp.domain.repository.WalletApi
-import xyz.lilsus.papp.proto.wallet_config.BlinkWalletConfig
+import xyz.lilsus.papp.domain.model.config.wallets.BlinkConfig
+import xyz.lilsus.papp.domain.repository.client.WalletApi
 
 // FIXME: https://github.com/NicolaLS/papp-android/issues/11
 
 // Blink GraphQL API doc: https://dev.blink.sv/public-api-reference.html#mutation-lnInvoicePaymentSend
 // Don't use GraphQL client because it is not worth it.
 
-class BlinkWalletApi(config: BlinkWalletConfig) : WalletApi {
+class BlinkWalletApi(config: BlinkConfig) : WalletApi {
     private val client = OkHttpClient()
     val json = Json { ignoreUnknownKeys = true }
 

@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.domain.repository
+package xyz.lilsus.papp.domain.repository.client
 
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.IntoSendPaymentResult

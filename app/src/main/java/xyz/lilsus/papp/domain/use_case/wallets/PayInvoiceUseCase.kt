@@ -1,4 +1,4 @@
-package xyz.lilsus.papp.domain.use_case.pay
+package xyz.lilsus.papp.domain.use_case.wallets
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
