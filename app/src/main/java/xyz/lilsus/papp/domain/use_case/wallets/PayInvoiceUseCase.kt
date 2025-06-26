@@ -7,15 +7,20 @@ import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentResult
 import xyz.lilsus.papp.domain.repository.WalletRepository
 
-class PayInvoiceUseCase(private val repository: WalletRepository) {
+class PayInvoiceUseCase(private val repository: WalletRepository?) {
     fun execute(invoice: Invoice): Flow<Resource<SendPaymentResult>> = flow {
         emit(Resource.Loading())
-        try {
-            val res = repository.payBolt11Invoice(invoice)
-            emit(Resource.Success(res))
-        } catch (e: Exception) {
-            emit(Resource.Error(message = "Something went wrong...\n${e.message}"))
+        if (repository != null) {
+            try {
+                val res = repository.payBolt11Invoice(invoice)
+                emit(Resource.Success(res))
+            } catch (e: Exception) {
+                emit(Resource.Error(message = "Something went wrong...\n${e.message}"))
+            }
+        } else {
+            emit(Resource.Error(message = "No active wallet configured"))
         }
+
 
     }
 }

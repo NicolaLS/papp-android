@@ -5,13 +5,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import xyz.lilsus.papp.data.WalletConfigStoreSerializer
-import xyz.lilsus.papp.data.remote.WalletClientFactoryImpl
 import xyz.lilsus.papp.data.repository.WalletConfigRepositoryImpl
-import xyz.lilsus.papp.data.repository.WalletRepositoryImpl
+import xyz.lilsus.papp.data.repository.WalletRepositoryFactoryImpl
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.config.AddWalletUseCase
@@ -32,24 +30,19 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
     private val dataStore: DataStore<WalletConfigStore> = context.walletConfigStore
 
     val walletConfigRepository = WalletConfigRepositoryImpl(dataStore)
-    private val walletClientFactory = WalletClientFactoryImpl()
+    private val walletRepositoryFactory = WalletRepositoryFactoryImpl()
 
     // Expose a StateFlow of the WalletRepository (auto-updating client)
-    val walletRepositoryFlow: StateFlow<WalletRepository> =
+    val walletRepositoryFlow: StateFlow<WalletRepository?> =
         walletConfigRepository.getActiveWalletOrNull()
-            .filterNotNull()
-            .map { config ->
-                val client = walletClientFactory.getClientFromConfigOrNull(config)
-                WalletRepositoryImpl(client)
-
-            }
+            .map { it?.let { walletRepositoryFactory.getClientFromConfigOrNull(it) } }
             .stateIn(
                 scope = applicationScope,
                 started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
-                initialValue = WalletRepositoryImpl(null)
+                initialValue = null
             )
 
-    fun createMainViewModel(walletRepository: WalletRepository): MainViewModel {
+    fun createMainViewModel(walletRepository: WalletRepository?): MainViewModel {
         val payUseCase = PayInvoiceUseCase(walletRepository)
         return MainViewModel(payUseCase)
     }
