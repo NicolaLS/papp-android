@@ -2,10 +2,6 @@ package xyz.lilsus.papp.domain.model
 
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 
-interface IntoSendPaymentResult {
-    fun interpretWalletDto(): SendPaymentResult
-}
-
 data class SendPaymentData(
     val amountPaid: Int,
     val feePaid: Int,
