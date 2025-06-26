@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import xyz.lilsus.papp.data.WalletConfigStoreSerializer
@@ -36,9 +37,11 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
     // Expose a StateFlow of the WalletRepository (auto-updating client)
     val walletRepositoryFlow: StateFlow<WalletRepository> =
         walletConfigRepository.getActiveWalletOrNull()
+            .filterNotNull()
             .map { config ->
                 val client = walletClientFactory.getClientFromConfigOrNull(config)
                 WalletRepositoryImpl(client)
+
             }
             .stateIn(
                 scope = applicationScope,

@@ -7,11 +7,7 @@ import xyz.lilsus.papp.domain.repository.client.WalletApi
 import xyz.lilsus.papp.domain.repository.client.WalletClientFactory
 
 class WalletClientFactoryImpl : WalletClientFactory {
-    override fun getClientFromConfigOrNull(walletEntry: WalletEntry?): WalletApi? {
-        if (walletEntry == null) {
-            return null
-        }
-
+    override fun getClientFromConfigOrNull(walletEntry: WalletEntry): WalletApi? {
         return when (walletEntry.config) {
             is WalletConfigEntry.Blink -> BlinkWalletApi(walletEntry.config.config)
             WalletConfigEntry.NotSet -> null
