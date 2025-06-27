@@ -7,9 +7,11 @@ import xyz.lilsus.papp.domain.model.config.WalletEntry
 typealias WalletKey = String
 
 interface WalletConfigRepository {
-    fun getActiveWalletOrNull(): Flow<WalletEntry?>
-    fun getAllConfigs(): Flow<List<WalletEntry>>
+    val activeWalletKey: Flow<WalletKey>
+    val activeWalletConfigOrNull: Flow<WalletEntry?>
+    val walletConfigList: Flow<List<WalletEntry>>
 
+    suspend fun getWalletConfigOrNull(key: WalletKey): WalletEntry?
     suspend fun setActive(key: WalletKey)
     suspend fun addWallet(newWallet: AddWalletEntry, activate: Boolean = true): WalletKey
     suspend fun removeWalletConfig(key: WalletKey)

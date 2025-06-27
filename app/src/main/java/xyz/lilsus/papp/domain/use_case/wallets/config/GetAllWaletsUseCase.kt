@@ -10,7 +10,7 @@ import xyz.lilsus.papp.domain.repository.WalletConfigRepository
 
 class GetAllWalletsUseCase(private val repository: WalletConfigRepository) {
     operator fun invoke(): Flow<Resource<List<WalletEntry>>> =
-        repository.getAllConfigs()
+        repository.walletConfigList
             .map { Resource.Success(it) as Resource<List<WalletEntry>> }
             .onStart { emit(Resource.Loading()) }
             .catch { emit(Resource.Error(it.message ?: "Unknown Error")) }

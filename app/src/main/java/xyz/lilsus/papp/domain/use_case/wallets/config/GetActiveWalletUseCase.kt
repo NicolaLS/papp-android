@@ -10,8 +10,9 @@ import xyz.lilsus.papp.domain.repository.WalletConfigRepository
 
 class GetActiveWalletUseCase(private val repository: WalletConfigRepository) {
     operator fun invoke(): Flow<Resource<WalletEntry?>> =
-        repository.getActiveWalletOrNull()
+        repository.activeWalletConfigOrNull
             .map { Resource.Success(it) as Resource<WalletEntry?> }
             .onStart { emit(Resource.Loading()) }
             .catch { emit(Resource.Error(it.message ?: "Unknown Error")) }
+
 }
