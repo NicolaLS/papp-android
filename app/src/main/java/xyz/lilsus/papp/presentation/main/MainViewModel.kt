@@ -61,11 +61,11 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
     }
 
     fun pay(invoice: Invoice) {
-        payUseCase.execute(invoice).onEach { result ->
+        payUseCase(invoice).onEach { result ->
             _uiState.value = when (result) {
                 is Resource.Loading -> PaymentUiState.Loading
-                is Resource.Success -> PaymentUiState.Received(result.data!!)
-                is Resource.Error -> PaymentUiState.Error(result.message?.toString())
+                is Resource.Success -> PaymentUiState.Received(result.data.first)
+                is Resource.Error -> PaymentUiState.Error(result.message)
             }
         }.launchIn(viewModelScope)
     }

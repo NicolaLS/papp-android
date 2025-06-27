@@ -3,7 +3,6 @@ package xyz.lilsus.papp.data.repository.blink.dto
 import kotlinx.serialization.Serializable
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.SendPaymentResult
-import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import kotlin.math.abs
 
 @Serializable
@@ -49,43 +48,34 @@ data class PayInvoiceResponse(
 )
 
 fun PayInvoiceResponse.parse(): SendPaymentResult {
-    val wallet = WalletTypeEntry.BLINK
     val payload = this.data.lnInvoicePaymentSend
     val status =
-        payload.status ?: return SendPaymentResult.Failure(
-            wallet,
-            "Missing payment status"
-        )
+        payload.status ?: return SendPaymentResult.Failure("Missing payment status")
 
     return when (status) {
-        PaymentSendResult.ALREADY_PAID -> SendPaymentResult.AlreadyPaid(wallet)
+        PaymentSendResult.ALREADY_PAID -> SendPaymentResult.AlreadyPaid
         PaymentSendResult.FAILURE -> {
             val error =
                 "Error Sending Payment:\n ${payload.errors?.firstOrNull()?.message}"
-            SendPaymentResult.Failure(wallet, error)
+            SendPaymentResult.Failure(error)
         }
 
-        PaymentSendResult.PENDING -> SendPaymentResult.Pending(wallet)
+        PaymentSendResult.PENDING -> SendPaymentResult.Pending
         PaymentSendResult.SUCCESS -> {
             val tx =
-                payload.transaction ?: return SendPaymentResult.Failure(
-                    wallet,
-                    "Missing transaction"
-                )
+                payload.transaction ?: return SendPaymentResult.Failure("Missing transaction")
             val amountPaidTotal = abs(tx.settlementAmount)
             val feePaid = abs(tx.settlementFee)
             val amountPaid = amountPaidTotal - feePaid
             val memo = tx.memo
 
             SendPaymentResult.Success(
-                wallet = wallet,
-                data = SendPaymentData(
+                SendPaymentData(
                     amountPaid = amountPaid,
                     feePaid = feePaid,
                     memo = memo
                 )
             )
         }
-
     }
 }
