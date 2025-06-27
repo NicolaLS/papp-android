@@ -16,6 +16,7 @@ import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.SendPaymentResult
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.model.config.wallets.BlinkConfig
+import xyz.lilsus.papp.domain.repository.AuthProvider
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import kotlin.math.abs
 
@@ -24,7 +25,8 @@ import kotlin.math.abs
 // Blink GraphQL API doc: https://dev.blink.sv/public-api-reference.html#mutation-lnInvoicePaymentSend
 // Don't use GraphQL client because it is not worth it.
 
-class BlinkWalletRepository(config: BlinkConfig) : WalletRepository {
+class BlinkWalletRepository(config: BlinkConfig, private val authProvider: AuthProvider) :
+    WalletRepository {
     private val client = OkHttpClient()
     val json = Json { ignoreUnknownKeys = true }
 
@@ -79,10 +81,12 @@ class BlinkWalletRepository(config: BlinkConfig) : WalletRepository {
 
             val requestBody = requestBodyJson.toRequestBody(JSON_MEDIA_TYPE)
 
+            val auth = authProvider.getAuthHeader()
+
             val request = Request.Builder()
                 .url(GRAPHQL_URL)
                 .post(requestBody)
-                .addHeader("X-API-KEY", decryptedApiKey)
+                .addHeader(auth.first, auth.second)
                 .build()
 
             client.newCall(request).execute().use { response ->
