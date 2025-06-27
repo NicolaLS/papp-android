@@ -1,7 +1,9 @@
 package xyz.lilsus.papp.data.repository
 
 import androidx.datastore.core.DataStore
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import xyz.lilsus.papp.domain.model.config.AddWalletEntry
 import xyz.lilsus.papp.domain.model.config.WalletConfigEntry
@@ -19,33 +21,33 @@ class WalletConfigRepositoryImpl(
     private val dataStore: DataStore<WalletConfigStore>
 ) : WalletConfigRepository {
 
-    // FIXME: this fn is a bit feo
-    override fun getActiveWalletOrNull(): Flow<WalletEntry?> {
-        return dataStore.data.map { walletConfigStore ->
-            if (walletConfigStore.walletsMap.isEmpty()) {
-                null
-            } else {
-                val key = walletConfigStore.activeWalletKey
-                val wallet = walletConfigStore.walletsMap[walletConfigStore.activeWalletKey]
-                if (wallet != null) {
-                    val walletConfig = mapConfigProtoToModel(wallet.config)
-                    WalletEntry(wallet.alias, key, walletConfig)
-
-                } else {
-                    null
-                }
-            }
+    override val activeWalletKey =
+        dataStore.data.distinctUntilChangedBy { it.activeWalletKey }.map { walletConfigStore ->
+            walletConfigStore.activeWalletKey
         }
-    }
 
-    override fun getAllConfigs(): Flow<List<WalletEntry>> {
-        return dataStore.data.map { walletConfigStore ->
-            walletConfigStore.walletsMap.toList().map {
+    override val activeWalletConfigOrNull =
+        dataStore.data.distinctUntilChangedBy { it.activeWalletKey }.map { walletConfigStore ->
+            val key = walletConfigStore.activeWalletKey
+            val wallet = walletConfigStore.walletsMap[key]
+            wallet?.let { WalletEntry(it.alias, key, mapConfigProtoToModel(it.config)) }
+        }
+
+    override val walletConfigList =
+        dataStore.data.map { it.walletsMap }.distinctUntilChanged().map { walletsMap ->
+            walletsMap.toList().map {
                 val walletConfig = mapConfigProtoToModel(it.second.config)
                 WalletEntry(it.second.alias, it.first, walletConfig)
             }
         }
+
+    override suspend fun getWalletConfigOrNull(key: WalletKey): WalletEntry? {
+        val walletConfigStore = dataStore.data.first()
+
+        val found = walletConfigStore.walletsMap[key]
+        return found?.let { WalletEntry(it.alias, key, mapConfigProtoToModel(it.config)) }
     }
+
 
     override suspend fun setActive(key: WalletKey) {
         dataStore.updateData { current ->
@@ -92,7 +94,6 @@ class WalletConfigRepositoryImpl(
         }
     }
 
-
     private fun generateWalletKey(): String {
         val bytes = ByteArray(8)
         SecureRandom().nextBytes(bytes)
@@ -125,6 +126,4 @@ class WalletConfigRepositoryImpl(
             }
         }
     }
-
-
 }

@@ -34,7 +34,7 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
 
     // Expose a StateFlow of the WalletRepository (auto-updating client)
     val walletRepositoryFlow: StateFlow<WalletRepository?> =
-        walletConfigRepository.getActiveWalletOrNull()
+        walletConfigRepository.activeWalletConfigOrNull
             .map { it?.let { walletRepositoryFactory.getClientFromConfigOrNull(it) } }
             .stateIn(
                 scope = applicationScope,
