@@ -4,7 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import xyz.lilsus.papp.domain.model.SendPaymentResult
+import xyz.lilsus.papp.domain.model.SendPaymentData
+import xyz.lilsus.papp.domain.model.WalletError
 import kotlin.math.abs
 
 class PayInvoiceResponseTest {
@@ -20,7 +21,8 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseMissingStatus.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
+        assertEquals("Missing payment status", sendPaymentResult.exceptionOrNull()?.message)
     }
 
     @Test
@@ -35,7 +37,7 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseAlreadyPaidStatus.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.AlreadyPaid)
+        assertTrue(sendPaymentResult.getOrNull() is SendPaymentData.AlreadyPaid)
     }
 
     @Test
@@ -50,7 +52,7 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responsePendingStatus.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.Pending)
+        assertTrue(sendPaymentResult.getOrNull() is SendPaymentData.Pending)
     }
 
     @Test
@@ -66,7 +68,8 @@ class PayInvoiceResponseTest {
         )
 
         var sendPaymentResult = responseFailureStatusWithoutErrors.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
     @Test
@@ -75,7 +78,7 @@ class PayInvoiceResponseTest {
             PayInvoiceData(
                 PaymentSendPayload(
                     errors = listOf(
-                        xyz.lilsus.papp.data.repository.blink.dto.Error(
+                        xyz.lilsus.papp.data.repository.blink.dto.ErrorDto(
                             "69420",
                             "error message",
                             listOf("path0", "path1")
@@ -88,7 +91,8 @@ class PayInvoiceResponseTest {
         )
 
         val sendPaymentResult = responseFailureStatusWithErrors.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
     @Test
@@ -103,7 +107,8 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseSuccessStatusNoTransaction.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Missing transaction"))
     }
 
     @Test
@@ -125,8 +130,8 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseSuccessStatus.parse()
-        assertTrue(sendPaymentResult is SendPaymentResult.Success)
-        val data = (sendPaymentResult as SendPaymentResult.Success).data
+        assert(sendPaymentResult.getOrNull() is SendPaymentData.Success)
+        val data = (sendPaymentResult.getOrNull() as SendPaymentData.Success)
         val amountPaidTotal = abs(transaction.settlementAmount) // 420
         val feePaid = abs(transaction.settlementFee) // 69
         val amountPaid = amountPaidTotal - feePaid // 351
