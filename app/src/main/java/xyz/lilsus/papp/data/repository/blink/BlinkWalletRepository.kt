@@ -9,7 +9,8 @@ import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.data.repository.blink.dto.PayInvoiceResponse
 import xyz.lilsus.papp.data.repository.blink.dto.parse
 import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
-import xyz.lilsus.papp.domain.model.SendPaymentResult
+import xyz.lilsus.papp.domain.model.SendPaymentData
+import xyz.lilsus.papp.domain.model.WalletError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.repository.GraphQLHttpClient
 import xyz.lilsus.papp.domain.repository.WalletRepository
@@ -25,14 +26,14 @@ class BlinkWalletRepository(
     private val json: Json = Json { ignoreUnknownKeys = true }
 ) :
     WalletRepository {
-        
+
     companion object {
         const val GRAPHQL_URL = "https://api.blink.sv/graphql"
     }
 
     override val walletType = WalletTypeEntry.BLINK
 
-    override suspend fun payBolt11Invoice(invoice: Invoice): SendPaymentResult {
+    override suspend fun payBolt11Invoice(invoice: Invoice): Result<SendPaymentData> {
         val variables = buildJsonObject {
             putJsonObject("input") {
                 put("paymentRequest", invoice.encodedSafe)
@@ -40,12 +41,17 @@ class BlinkWalletRepository(
             }
         }
 
-        val response = client.post(Mutations.LnInvoicePaymentSend, variables)
+        val result = client.post(Mutations.LnInvoicePaymentSend, variables)
 
-        val data = json.decodeFromString(
-            PayInvoiceResponse.serializer(),
-            response
+        return result.fold(
+            onSuccess = { bodyString ->
+                val payInvoiceResponse =
+                    json.decodeFromString(PayInvoiceResponse.serializer(), bodyString)
+                payInvoiceResponse.parse()
+            },
+            onFailure = { error ->
+                Result.failure(WalletError.Client(error))
+            }
         )
-        return data.parse()
     }
 }

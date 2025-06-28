@@ -13,33 +13,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import xyz.lilsus.papp.domain.model.SendPaymentResult
+import xyz.lilsus.papp.domain.model.SendPaymentData
 
 @Composable
-fun PaymentResultScreen(result: SendPaymentResult) {
-    when (result) {
-        is SendPaymentResult.Success -> {
+fun PaymentResultScreen(data: SendPaymentData) {
+    when (val result = data) {
+        is SendPaymentData.Success -> {
             PaymentSuccessLayout(
-                title = "${result.data.amountPaid} SAT",
-                subtitle = "Fee ${result.data.feePaid} SAT",
-                memo = result.data.memo
+                title = "${result.amountPaid} SAT",
+                subtitle = "Fee ${result.feePaid} SAT",
+                memo = result.memo
             )
         }
 
-        is SendPaymentResult.AlreadyPaid -> {
+        is SendPaymentData.AlreadyPaid -> {
             PaymentSuccessLayout(
                 title = "Invoice already paid"
             )
         }
 
-        is SendPaymentResult.Pending -> {
+        is SendPaymentData.Pending -> {
             PaymentSuccessLayout(
                 title = "Payment is pending..."
             )
-        }
-
-        is SendPaymentResult.Failure -> {
-            PaymentError(message = result.message)
         }
     }
 }
