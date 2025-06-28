@@ -24,14 +24,14 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
-import xyz.lilsus.papp.domain.model.SendPaymentResult
+import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 
 
 sealed class PaymentUiState {
     object Idle : PaymentUiState()
     object Loading : PaymentUiState()
-    data class Received(val result: SendPaymentResult) : PaymentUiState()
+    data class Received(val result: SendPaymentData) : PaymentUiState()
     data class Error(val message: String?) : PaymentUiState()
 }
 

@@ -13,12 +13,16 @@ import okhttp3.Response
 import xyz.lilsus.papp.domain.repository.AuthProvider
 import xyz.lilsus.papp.domain.repository.GraphQLHttpClient
 
-class OkHttpGraphQLHttpClient(private val authProvider: AuthProvider, private val url: String) :
+class OkHttpGraphQLHttpClient(
+    private val authProvider: AuthProvider,
+    private val url: String,
+    private val client: OkHttpClient = OkHttpClient(),
+) :
     GraphQLHttpClient {
     override suspend fun post(
         query: String,
         variables: JsonObject
-    ): String {
+    ): Result<String> {
         fun buildRequest(): Request {
             val bodyJson = buildJsonObject {
                 put("query", query)
@@ -37,13 +41,28 @@ class OkHttpGraphQLHttpClient(private val authProvider: AuthProvider, private va
         }
 
         suspend fun executeRequest(request: Request): Response = withContext(Dispatchers.IO) {
-            OkHttpClient().newCall(request).execute()
+            client.newCall(request).execute()
         }
 
 
         val request = buildRequest()
-        return executeRequest(request).use {
-            it.body?.string() ?: throw Exception("Unexpected Reply")
+        return try {
+            executeRequest(request).use {
+                if (!it.isSuccessful) {
+                    return Result.failure(
+                        GraphQLError.HttpError(it.code, it.body?.string())
+                    )
+                }
+
+                val body = it.body?.string()
+                if (body == null) {
+                    return Result.failure(GraphQLError.EmptyBody)
+                }
+
+                Result.success(body)
+            }
+        } catch (e: Exception) {
+            Result.failure(GraphQLError.NetworkError(e))
         }
     }
 }
