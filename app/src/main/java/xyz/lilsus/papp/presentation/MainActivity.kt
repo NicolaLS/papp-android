@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var appDependencies: AppDependencies
 
     override fun onCreate(savedInstanceState: Bundle?) {
+	// TODO: TEST PR 2
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
