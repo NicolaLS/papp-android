@@ -21,8 +21,7 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseMissingStatus.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
-        assertEquals("Missing payment status", sendPaymentResult.exceptionOrNull()?.message)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.MissingStatus)
     }
 
     @Test
@@ -68,7 +67,7 @@ class PayInvoiceResponseTest {
         )
 
         var sendPaymentResult = responseFailureStatusWithoutErrors.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.PaymentError)
         assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
@@ -91,7 +90,7 @@ class PayInvoiceResponseTest {
         )
 
         val sendPaymentResult = responseFailureStatusWithErrors.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.PaymentError)
         assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
@@ -107,8 +106,7 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseSuccessStatusNoTransaction.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.Failure)
-        assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Missing transaction"))
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.MissingTransaction)
     }
 
     @Test
