@@ -23,7 +23,7 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
       - name: Upload Debug APK Artifact
-        uses actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: papp-android-debug
           path: papp-android/app/build/outputs/apk/papp-android-debug.apk
