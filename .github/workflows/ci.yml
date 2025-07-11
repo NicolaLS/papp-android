@@ -1,0 +1,33 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Build Android App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '24'
+          cache: 'gradle'
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+      - name: Upload Debug APK Artifact
+        uses actions/upload-artifact@v4
+        with:
+          name: papp-android-debug
+          path: papp-android/app/build/outputs/apk/papp-android-debug.apk
+  # unit-test:
+    # todo
+  # lint:
+    # todo
