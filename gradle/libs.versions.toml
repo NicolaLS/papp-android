@@ -22,6 +22,7 @@ mockk = "1.14.4"
 okhttp = "4.12.0"
 material3 = "1.4.0-alpha15"
 protobufJavalite = "4.31.1"
+slf4jSimple = "2.0.9"
 
 [libraries]
 # Contains the basic camera functionality such as SurfaceRequest
@@ -60,6 +61,7 @@ ln-invoice = { module = "app.cash.lninvoice:ln-invoice", version.ref = "lnInvoic
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
