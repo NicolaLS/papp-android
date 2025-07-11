@@ -45,9 +45,9 @@ class BlinkWalletRepository(
 
         return result.fold(
             onSuccess = { bodyString ->
-                val payInvoiceResponse =
-                    json.decodeFromString(PayInvoiceResponse.serializer(), bodyString)
-                payInvoiceResponse.parse()
+                runCatching { json.decodeFromString(PayInvoiceResponse.serializer(), bodyString) }
+                    .mapCatching { it.parse() }
+                    .getOrElse { Result.failure(WalletError.Deserialization) }
             },
             onFailure = { error ->
                 Result.failure(WalletError.Client(error))
