@@ -21,10 +21,9 @@ class WalletConfigRepositoryImpl(
     private val dataStore: DataStore<WalletConfigStore>
 ) : WalletConfigRepository {
 
-    override val activeWalletKey =
-        dataStore.data.distinctUntilChangedBy { it.activeWalletKey }.map { walletConfigStore ->
-            walletConfigStore.activeWalletKey
-        }
+    override val activeWalletKeyOrNull =
+        dataStore.data.distinctUntilChangedBy { it.activeWalletKey }
+            .map { it.activeWalletKey.takeIf { key -> key.isNotBlank() } }
 
     override val activeWalletConfigOrNull =
         dataStore.data.distinctUntilChangedBy { it.activeWalletKey }.map { walletConfigStore ->
