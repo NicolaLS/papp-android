@@ -20,8 +20,9 @@ import xyz.lilsus.papp.domain.use_case.wallets.config.SetActiveWalletUseCase
 import xyz.lilsus.papp.presentation.main.MainViewModel
 import xyz.lilsus.papp.presentation.settings.SettingsViewModel
 import xyz.lilsus.papp.proto.wallet_config.WalletConfigStore
+import java.util.concurrent.Executors
 
-class AppDependencies(context: Context, private val applicationScope: CoroutineScope) {
+class AppDependencies(val context: Context, private val applicationScope: CoroutineScope) {
     private val Context.walletConfigStore: DataStore<WalletConfigStore> by dataStore(
         fileName = "wallet_config.pb",
         serializer = WalletConfigStoreSerializer
@@ -44,7 +45,13 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
 
     fun createMainViewModel(walletRepository: WalletRepository?): MainViewModel {
         val payUseCase = PayInvoiceUseCase(walletRepository)
-        return MainViewModel(payUseCase)
+        val cameraController = CameraControllerFactory(context).createController()
+        val analyzer = QrCodeAnalyzer()
+        cameraController.setImageAnalysisAnalyzer(
+            Executors.newCachedThreadPool(),
+            analyzer
+        )
+        return MainViewModel(payUseCase, analyzer, cameraController)
     }
 
     fun createSettingsViewModel(): SettingsViewModel {

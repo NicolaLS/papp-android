@@ -1,6 +1,5 @@
 package xyz.lilsus.papp.presentation.main.components
 
-import androidx.camera.compose.CameraXViewfinder
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,48 +10,21 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import xyz.lilsus.papp.presentation.main.MainViewModel
-import xyz.lilsus.papp.presentation.main.PaymentUiState
 
 @Composable
 fun MainScreenContent(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
-    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+    viewModel.cameraController.bindToLifecycle(LocalLifecycleOwner.current)
 
     val uiState by viewModel.uiState
 
-    val showBottomSheet = when (uiState) {
-        is PaymentUiState.Loading,
-        is PaymentUiState.Received,
-        is PaymentUiState.Error -> true
-
-        PaymentUiState.Idle -> false
-    }
-
-
-    LaunchedEffect(Unit) {
-        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
-    }
-
-    surfaceRequest?.let { request ->
-        CameraXViewfinder(surfaceRequest = request, modifier = Modifier.fillMaxSize())
-    }
-
-    if (showBottomSheet) {
-        QrCodeBottomSheet(
-            uiState = uiState,
-            onDismiss = viewModel::reset
-        )
-    }
+    CameraPreview(viewModel.cameraController)
+    uiState?.let { QrCodeBottomSheet(uiState = it, onDismiss = viewModel::reset) }
 
     // Settings Button at top-left corner
     Box(

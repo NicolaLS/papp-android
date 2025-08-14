@@ -84,8 +84,6 @@ fun QrCodeBottomSheet(
                         Text("Close")
                     }
                 }
-
-                else -> {} // Idle: don't show anything
             }
 
         }

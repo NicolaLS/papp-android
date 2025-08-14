@@ -95,6 +95,9 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.barcode.scanning)
 
+    // Need for Zoom
+    implementation(libs.guava)
+
     // ML Kit Barcode Scanning
     implementation(libs.androidx.camera.mlkit.vision)
 

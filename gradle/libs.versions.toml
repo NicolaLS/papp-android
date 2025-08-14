@@ -4,6 +4,7 @@ arrowCoreJvm = "1.2.0"
 barcodeScanning = "17.3.0"
 cameraMlkitVision = "1.4.2"
 datastore = "1.1.7"
+guava = "33.4.8-android"
 kotestAssertionsCore = "6.0.0.M4"
 kotlin = "2.0.21"
 coreKtx = "1.16.0"
@@ -15,7 +16,7 @@ kotlinxSerializationJson = "1.7.3"
 lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
 composeBom = "2025.06.00"
-camerax = "1.5.0-beta01"
+camerax = "1.5.0-rc01"
 accompanist = "0.37.2"
 lnInvoice = "0.0.1"
 mockk = "1.14.4"
@@ -41,6 +42,7 @@ androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "d
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 arrow-core-jvm = { module = "io.arrow-kt:arrow-core-jvm", version.ref = "arrowCoreJvm" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
