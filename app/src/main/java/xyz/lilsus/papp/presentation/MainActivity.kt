@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import xyz.lilsus.papp.di.AppDependencies
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.presentation.main.MainScreen
+import xyz.lilsus.papp.presentation.main.components.WithCameraPermission
 import xyz.lilsus.papp.presentation.settings.SettingsScreen
 
 enum class Screen {
@@ -52,8 +53,10 @@ fun App(deps: AppDependencies) {
             val viewModel = remember(walletRepository) {
                 deps.createMainViewModel(walletRepository)
             }
-            MainScreen(viewModel) {
-                currentScreen = Screen.SETTINGS
+            WithCameraPermission {
+                MainScreen(viewModel) {
+                    currentScreen = Screen.SETTINGS
+                }
             }
 
         }
