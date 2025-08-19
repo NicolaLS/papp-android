@@ -7,10 +7,8 @@ import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceRequest
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
-import androidx.camera.mlkit.vision.MlKitAnalyzer
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import xyz.lilsus.papp.common.Bolt11Invoice
+import xyz.lilsus.papp.common.InvoiceAnalyzer
 import xyz.lilsus.papp.common.InvoiceParser
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
@@ -101,17 +100,7 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
                 .build()
         )
 
-        val analyzer = MlKitAnalyzer(
-            listOf(scanner),
-            ImageAnalysis.COORDINATE_SYSTEM_ORIGINAL,
-            // NOTE: This is the executor for the barcode scanner
-            ContextCompat.getMainExecutor(context)
-        ) { result ->
-            val barcodes = result?.getValue(scanner)
-            barcodes?.firstOrNull()?.rawValue.let {
-                invoiceParser.parse(it)
-            }
-        }
+        val analyzer = InvoiceAnalyzer(scanner, invoiceParser)
 
         val analysisUseCase = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -120,7 +109,7 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
                     if (isProcessingFlag.get()) {
                         imageProxy.close()
                     } else {
-                        // NOTE: MlKitAnalyzer closes the image proxy for us after finish.
+                        // NOTE: InvoiceAnalyzer closes the image proxy for us on complete.
                         analyzer.analyze(imageProxy)
                     }
                 }
