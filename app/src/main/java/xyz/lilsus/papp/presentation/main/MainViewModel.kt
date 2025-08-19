@@ -3,8 +3,6 @@ package xyz.lilsus.papp.presentation.main
 import android.content.Context
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.core.SurfaceRequest
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.runtime.State
@@ -12,17 +10,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.common.InvoiceAnalyzer
-import xyz.lilsus.papp.common.InvoiceParser
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
@@ -38,10 +30,11 @@ sealed class PaymentUiState {
 }
 
 // TODO: DI with Hilt
-class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
-    private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
-    val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
-
+class MainViewModel(
+    val payUseCase: PayInvoiceUseCase,
+    val imageAnalysisUseCase: ImageAnalysis,
+    val invoiceAnalyzer: InvoiceAnalyzer
+) : ViewModel() {
     // NOTE: There are two concurrent things happening in our QR code detection logic:
     // - The Image Analysis Use Case running on some Executor (not main thread)
     // - The MlKit Barcode Scanner processing some image it received in the `ImageAnalysis.Analyzer`
@@ -67,11 +60,39 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
     val uiState: State<PaymentUiState> = _uiState
 
 
-    val invoiceParser = InvoiceParser().onBolt11(::pay)
+    private var cameraProvider: ProcessCameraProvider? = null
+    private val analyzerExecutor = Executors.newCachedThreadPool()
+
+
+    // FIXME: This feel wrong. Maybe redesign the whole analyzer/parser stuff.
+    init {
+        invoiceAnalyzer.invoiceParser.onBolt11(::pay)
+    }
+
+    fun rebindCamera(context: Context, lifecycleOwner: LifecycleOwner) {
+        viewModelScope.launch {
+            cameraProvider = ProcessCameraProvider.awaitInstance(context)
+            // FIXME: This **hides** a bug / messy setup:
+            // - In DI we create new instances of the use case when navigating
+            // - We never clean up, in fact the view model is never destroyed
+            // - The old instance gets cleaned up I think, so then there is a non
+            // functional / null use case attached.
+            // - We bind to the MainActivity lifecycle not the view model / component.
+            // need to fix DI and Navigation later...
+            cameraProvider?.unbindAll()
+            imageAnalysisUseCase.setAnalyzer(analyzerExecutor, invoiceAnalyzer)
+            cameraProvider?.bindToLifecycle(
+                lifecycleOwner,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                imageAnalysisUseCase
+            )
+        }
+    }
 
     // TODO: Handle amount-less bolt11
     fun pay(bolt11Invoice: Bolt11Invoice) {
         if (isProcessingFlag.compareAndSet(false, true)) {
+            imageAnalysisUseCase.clearAnalyzer()
             payUseCase(bolt11Invoice).onEach { result ->
                 _uiState.value = when (result) {
                     is Resource.Loading -> PaymentUiState.Loading
@@ -83,50 +104,8 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
     }
 
     fun reset() {
+        imageAnalysisUseCase.setAnalyzer(analyzerExecutor, invoiceAnalyzer)
         _uiState.value = PaymentUiState.Idle
         isProcessingFlag.set(false)
-    }
-
-    private val previewUseCase = Preview.Builder().build().apply {
-        setSurfaceProvider { request ->
-            _surfaceRequest.value = request
-        }
-    }
-
-    suspend fun bindToCamera(context: Context, lifecycleOwner: LifecycleOwner) {
-        val scanner = BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build()
-        )
-
-        val analyzer = InvoiceAnalyzer(scanner, invoiceParser)
-
-        val analysisUseCase = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build().apply {
-                setAnalyzer(Executors.newCachedThreadPool()) { imageProxy ->
-                    if (isProcessingFlag.get()) {
-                        imageProxy.close()
-                    } else {
-                        // NOTE: InvoiceAnalyzer closes the image proxy for us on complete.
-                        analyzer.analyze(imageProxy)
-                    }
-                }
-            }
-
-        val provider = ProcessCameraProvider.awaitInstance(context)
-        provider.bindToLifecycle(
-            lifecycleOwner,
-            CameraSelector.DEFAULT_BACK_CAMERA,
-            previewUseCase,
-            analysisUseCase
-        )
-
-        try {
-            awaitCancellation()
-        } finally {
-            provider.unbindAll()
-        }
     }
 }

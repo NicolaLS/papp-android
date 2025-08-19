@@ -1,6 +1,5 @@
 package xyz.lilsus.papp.presentation.main
 
-import androidx.camera.compose.CameraXViewfinder
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,14 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import xyz.lilsus.papp.presentation.main.components.QrCodeBottomSheet
 
 @Composable
 fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
 
     val uiState by viewModel.uiState
 
@@ -38,13 +35,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     }
 
 
-    LaunchedEffect(Unit) {
-        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
-    }
-
-    surfaceRequest?.let { request ->
-        CameraXViewfinder(surfaceRequest = request, modifier = Modifier.fillMaxSize())
-    }
+    LaunchedEffect(Unit) { viewModel.rebindCamera(context, lifecycleOwner) }
 
     if (showBottomSheet) {
         QrCodeBottomSheet(
