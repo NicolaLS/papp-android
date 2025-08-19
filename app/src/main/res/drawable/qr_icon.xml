@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 3 corner squares like a QR finder pattern -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M2,2h6v6h-6z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M16,2h6v6h-6z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M2,16h6v6h-6z" />
+
+    <!-- Some inner random squares -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M10,10h2v2h-2z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M14,12h2v2h-2z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,14h2v2h-2z" />
+</vector>

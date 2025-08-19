@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">papp</string>
+    <string-array name="qr_scan_messages">
+        <item>Show me the magic squares ✨</item>
+        <item>Hold up the code, I’ll do the rest 🪄</item>
+        <item>Show me the QR, human 😎</item>
+        <item>Ready when you are — just flash the code 👀</item>
+        <item>Aim at the QR and let the sats flow ⚡</item>
+        <item>Point to pay. Zap complete in seconds ⚡️</item>
+        <item>Acquire target. Your invoice awaits 🎯</item>
+        <item>Scan. Pay. Done. That easy.</item>
+        <item>Catch the QR if you can 🕹️</item>
+        <item>Psst… got a QR? I’ll take it from here 😉</item>
+        <item>Show me your best QR pose 📸</item>
+        <item>Feed me QR codes, I’m hungry 😋</item>
+        <item>Let’s dance — bring the QR closer 💃</item>
+    </string-array>
 </resources>

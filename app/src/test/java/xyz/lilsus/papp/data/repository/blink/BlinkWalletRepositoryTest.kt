@@ -15,7 +15,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import org.junit.Before
 import org.junit.Test
-import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.data.repository.blink.graphql.GraphQLError
 import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
 import xyz.lilsus.papp.data.repository.blink.graphql.OkHttpGraphQLHttpClient
@@ -29,7 +29,7 @@ class BlinkWalletRepositoryTest {
 
     companion object {
         private val INVOICE =
-            Invoice.parseOrNull("lnbc93440n1p59msy5pp56ft8ayhe7jut3yk2keejpfu66qppkxkwy2nk82ywtlasuxpmen9sdqqcqzzsxqyz5vqsp5eyqt9rq8mv4r3dvzdv007dqmlsvl6fdv2f07yrh74lj7lzg6deqs9qxpqysgqxuf89ejpguvkx5vum5k72j73dfp5gmna93v34qjgd9lsvthfwjqx8qmzt8j8dfscdfxel3ahz8dcksfw4yuwpejmksus5fd2dde7c5cqy9jfc3")!!
+            Bolt11Invoice.parseOrNull("lnbc93440n1p59msy5pp56ft8ayhe7jut3yk2keejpfu66qppkxkwy2nk82ywtlasuxpmen9sdqqcqzzsxqyz5vqsp5eyqt9rq8mv4r3dvzdv007dqmlsvl6fdv2f07yrh74lj7lzg6deqs9qxpqysgqxuf89ejpguvkx5vum5k72j73dfp5gmna93v34qjgd9lsvthfwjqx8qmzt8j8dfscdfxel3ahz8dcksfw4yuwpejmksus5fd2dde7c5cqy9jfc3")!!
         private const val WALLET_ID = "420-69"
     }
 
