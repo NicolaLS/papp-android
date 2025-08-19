@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
-import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.data.repository.blink.dto.PayInvoiceResponse
 import xyz.lilsus.papp.data.repository.blink.dto.parse
 import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
@@ -33,10 +33,10 @@ class BlinkWalletRepository(
 
     override val walletType = WalletTypeEntry.BLINK
 
-    override suspend fun payBolt11Invoice(invoice: Invoice): Result<SendPaymentData> {
+    override suspend fun payBolt11Invoice(bolt11Invoice: Bolt11Invoice): Result<SendPaymentData> {
         val variables = buildJsonObject {
             putJsonObject("input") {
-                put("paymentRequest", invoice.encodedSafe)
+                put("paymentRequest", bolt11Invoice.encodedSafe)
                 put("walletId", walletId)
             }
         }

@@ -15,7 +15,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import org.junit.Before
 import org.junit.Test
-import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.data.repository.blink.graphql.GraphQLError
 import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
 import xyz.lilsus.papp.data.repository.blink.graphql.OkHttpGraphQLHttpClient
@@ -28,8 +28,8 @@ class BlinkWalletRepositoryTest {
     lateinit var blinkWalletRepository: BlinkWalletRepository
 
     companion object {
-        private val INVOICE =
-            Invoice.parseOrNull("lnbc93440n1p59msy5pp56ft8ayhe7jut3yk2keejpfu66qppkxkwy2nk82ywtlasuxpmen9sdqqcqzzsxqyz5vqsp5eyqt9rq8mv4r3dvzdv007dqmlsvl6fdv2f07yrh74lj7lzg6deqs9qxpqysgqxuf89ejpguvkx5vum5k72j73dfp5gmna93v34qjgd9lsvthfwjqx8qmzt8j8dfscdfxel3ahz8dcksfw4yuwpejmksus5fd2dde7c5cqy9jfc3")!!
+        private val BOLT11 =
+            Bolt11Invoice.parseOrNull("lnbc93440n1p59msy5pp56ft8ayhe7jut3yk2keejpfu66qppkxkwy2nk82ywtlasuxpmen9sdqqcqzzsxqyz5vqsp5eyqt9rq8mv4r3dvzdv007dqmlsvl6fdv2f07yrh74lj7lzg6deqs9qxpqysgqxuf89ejpguvkx5vum5k72j73dfp5gmna93v34qjgd9lsvthfwjqx8qmzt8j8dfscdfxel3ahz8dcksfw4yuwpejmksus5fd2dde7c5cqy9jfc3")!!
         private const val WALLET_ID = "420-69"
     }
 
@@ -49,13 +49,13 @@ class BlinkWalletRepositoryTest {
         } returns Result.failure(Exception())
 
         runBlocking {
-            blinkWalletRepository.payBolt11Invoice(INVOICE)
+            blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
 
         coVerify(exactly = 1) {
             mockGraphQLClient.post(Mutations.LnInvoicePaymentSend, buildJsonObject {
                 putJsonObject("input") {
-                    put("paymentRequest", INVOICE.encodedSafe)
+                    put("paymentRequest", BOLT11.encodedSafe)
                     put("walletId", WALLET_ID)
                 }
             })
@@ -71,7 +71,7 @@ class BlinkWalletRepositoryTest {
             )
         } returns Result.failure(GraphQLError.EmptyBody)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeFailure<WalletError.Client>()
         res.exceptionOrNull()!!.cause.shouldBe(GraphQLError.EmptyBody)
     }
@@ -85,7 +85,7 @@ class BlinkWalletRepositoryTest {
             )
         } returns Result.failure(GraphQLError.HttpError(500, "Internal Server Error"))
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeFailure<WalletError.Client>()
         res.exceptionOrNull()!!.cause.shouldBe(GraphQLError.HttpError(500, "Internal Server Error"))
     }
@@ -99,7 +99,7 @@ class BlinkWalletRepositoryTest {
             )
         } returns Result.failure(GraphQLError.NetworkError(IOException("Timeout")))
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeFailure<WalletError.Client>()
         val cause = res.exceptionOrNull()!!.cause
         cause.shouldBeInstanceOf<GraphQLError.NetworkError>()
@@ -112,7 +112,7 @@ class BlinkWalletRepositoryTest {
         coEvery { mockGraphQLClient.post(any(), any()) } returns Result.success("not even JSON")
 
         val res = runBlocking {
-            blinkWalletRepository.payBolt11Invoice(INVOICE)
+            blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
         res.shouldBeFailure()
         res.exceptionOrNull().shouldBeInstanceOf<WalletError.Deserialization>()
@@ -125,7 +125,7 @@ class BlinkWalletRepositoryTest {
         coEvery { mockGraphQLClient.post(any(), any()) } returns Result.success(jsonResponseStub)
 
         val res = runBlocking {
-            blinkWalletRepository.payBolt11Invoice(INVOICE)
+            blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
         res.shouldBeFailure()
         res.exceptionOrNull().shouldBeInstanceOf<WalletError.MissingStatus>()
@@ -138,7 +138,7 @@ class BlinkWalletRepositoryTest {
         coEvery { mockGraphQLClient.post(any(), any()) } returns Result.success(jsonResponseStub)
 
         val res = runBlocking {
-            blinkWalletRepository.payBolt11Invoice(INVOICE)
+            blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
         res.shouldBeFailure()
         res.exceptionOrNull().shouldBeInstanceOf<WalletError.MissingTransaction>()
@@ -152,7 +152,7 @@ class BlinkWalletRepositoryTest {
             mockGraphQLClient.post(any(), any())
         } returns Result.success(jsonResponseStub)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeSuccess()
         res.getOrNull().shouldBe(SendPaymentData.Success(10, 10, null))
     }
@@ -165,7 +165,7 @@ class BlinkWalletRepositoryTest {
             mockGraphQLClient.post(any(), any())
         } returns Result.success(jsonResponseStub)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeSuccess()
         res.getOrNull().shouldBe(SendPaymentData.AlreadyPaid)
     }
@@ -178,7 +178,7 @@ class BlinkWalletRepositoryTest {
             mockGraphQLClient.post(any(), any())
         } returns Result.success(jsonResponseStub)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeSuccess()
         res.getOrNull().shouldBe(SendPaymentData.Pending)
     }
@@ -191,7 +191,7 @@ class BlinkWalletRepositoryTest {
             mockGraphQLClient.post(any(), any())
         } returns Result.success(jsonResponseStub)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(INVOICE) }
+        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
         res.shouldBeFailure<WalletError.PaymentError>()
         res.exceptionOrNull()!!.message.shouldContain("Error sending payment:")
         res.exceptionOrNull()!!.message.shouldContain("Some error")

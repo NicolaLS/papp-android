@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
@@ -49,7 +49,7 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
     fun onQrCodeDetected(qr: String) {
         if (scannedQrCode == null) {
             scannedQrCode = qr
-            val bolt11Invoice = Invoice.parseOrNull(qr)
+            val bolt11Invoice = Bolt11Invoice.parseOrNull(qr)
             if (bolt11Invoice != null) {
                 pay(bolt11Invoice)
             } else {
@@ -60,8 +60,8 @@ class MainViewModel(val payUseCase: PayInvoiceUseCase) : ViewModel() {
         }
     }
 
-    fun pay(invoice: Invoice) {
-        payUseCase(invoice).onEach { result ->
+    fun pay(bolt11Invoice: Bolt11Invoice) {
+        payUseCase(bolt11Invoice).onEach { result ->
             _uiState.value = when (result) {
                 is Resource.Loading -> PaymentUiState.Loading
                 is Resource.Success -> PaymentUiState.Received(result.data.first)
