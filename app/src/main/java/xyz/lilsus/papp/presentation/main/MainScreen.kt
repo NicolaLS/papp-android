@@ -1,51 +1,76 @@
 package xyz.lilsus.papp.presentation.main
 
-import android.Manifest
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.camera.compose.CameraXViewfinder
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import xyz.lilsus.papp.presentation.main.components.MainScreenContent
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import xyz.lilsus.papp.presentation.main.components.QrCodeBottomSheet
 
-
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
-    val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
 
-    if (cameraPermission.status.isGranted) {
-        MainScreenContent(viewModel, onSettingsClick)
-    } else {
-        Column(
+    val uiState by viewModel.uiState
+
+    val showBottomSheet = when (uiState) {
+        is PaymentUiState.Loading,
+        is PaymentUiState.Received,
+        is PaymentUiState.Error -> true
+
+        PaymentUiState.Idle -> false
+    }
+
+
+    LaunchedEffect(Unit) {
+        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
+    }
+
+    surfaceRequest?.let { request ->
+        CameraXViewfinder(surfaceRequest = request, modifier = Modifier.fillMaxSize())
+    }
+
+    if (showBottomSheet) {
+        QrCodeBottomSheet(
+            uiState = uiState,
+            onDismiss = viewModel::reset
+        )
+    }
+
+    // Settings Button at top-left corner
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+    ) {
+        IconButton(
+            onClick = onSettingsClick,
             modifier = Modifier
-                .fillMaxSize()
-                .wrapContentSize()
-                .widthIn(max = 480.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+                .size(40.dp)
         ) {
-            val text = if (cameraPermission.status.shouldShowRationale) {
-                "We need your camera to scan QR codes. Please grant permission!"
-            } else {
-                "Hi there! Grant camera permission to get started."
-            }
-            Text(text, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = { cameraPermission.launchPermissionRequest() }) {
-                Text("Grant Camera Access")
-            }
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
