@@ -35,7 +35,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     }
 
 
-    LaunchedEffect(Unit) { viewModel.rebindCamera(context, lifecycleOwner) }
+    LaunchedEffect(Unit) { viewModel.bindCamera(context, lifecycleOwner) }
 
     if (showBottomSheet) {
         QrCodeBottomSheet(

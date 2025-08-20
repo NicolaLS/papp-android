@@ -6,68 +6,60 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import xyz.lilsus.papp.di.AppDependencies
-import xyz.lilsus.papp.di.PappApplication
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import kotlinx.serialization.Serializable
 import xyz.lilsus.papp.presentation.main.MainScreen
+import xyz.lilsus.papp.presentation.main.MainViewModel
 import xyz.lilsus.papp.presentation.main.components.WithCameraPermission
 import xyz.lilsus.papp.presentation.settings.SettingsScreen
-
-enum class Screen {
-    MAIN, SETTINGS
-}
-
+import xyz.lilsus.papp.presentation.settings.SettingsViewModel
 
 class MainActivity : ComponentActivity() {
-    private lateinit var appDependencies: AppDependencies
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // Access the app-level container
-        appDependencies = (application as PappApplication).appDependencies
-
         setContent {
             MaterialTheme {
-                App(appDependencies)
+                App()
             }
         }
     }
 }
 
+@Serializable
+object RMain
+
+@Serializable
+object RSettings
+
 @Composable
-fun App(deps: AppDependencies) {
-    var currentScreen by remember { mutableStateOf(Screen.MAIN) }
+fun App() {
+    val navController = rememberNavController()
 
-    // Observe latest wallet repository
-    val walletRepository by deps.walletRepositoryFlow.collectAsState()
-
-    when (currentScreen) {
-        Screen.MAIN -> {
-
-            val viewModel = remember(walletRepository) {
-                deps.createMainViewModel(walletRepository)
-            }
+    NavHost(
+        navController = navController,
+        startDestination = RMain
+    ) {
+        composable<RMain> { backStackEntry ->
             WithCameraPermission {
-                MainScreen(viewModel) {
-                    currentScreen = Screen.SETTINGS
-                }
+                MainScreen(
+                    viewModel(
+                        viewModelStoreOwner = backStackEntry,
+                        factory = MainViewModel.Factory,
+                    )
+                ) { navController.navigate(RSettings) }
             }
-
         }
-
-        Screen.SETTINGS -> {
-            val viewModel = remember {
-                deps.createSettingsViewModel()
-            }
+        composable<RSettings> { backStackEntry ->
             SettingsScreen(
-                viewModel = viewModel,
-                onBack = { currentScreen = Screen.MAIN }
+                onBack = { navController.navigate(RMain) },
+                viewModel(
+                    viewModelStoreOwner = backStackEntry,
+                    factory = SettingsViewModel.Factory,
+                )
             )
         }
     }
