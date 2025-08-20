@@ -1,24 +1,36 @@
 package xyz.lilsus.papp.presentation.main
 
 import android.content.Context
+import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.common.InvoiceAnalyzer
+import xyz.lilsus.papp.common.InvoiceParser
 import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
-import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -33,8 +45,54 @@ sealed class PaymentUiState {
 class MainViewModel(
     val payUseCase: PayInvoiceUseCase,
     val imageAnalysisUseCase: ImageAnalysis,
-    val invoiceAnalyzer: InvoiceAnalyzer
+    val invoiceAnalyzer: InvoiceAnalyzer,
+    val analyzerExecutor: ExecutorService,
 ) : ViewModel() {
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[APPLICATION_KEY] as PappApplication)
+                val walletRepositoryFlow = application.appDependencies.walletRepositoryFlow
+                val analyzerExecutor = application.appDependencies.analyzerExecutor
+
+                val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
+
+                val imageAnalysisUseCase = ImageAnalysis.Builder()
+                    .setResolutionSelector(
+                        ResolutionSelector.Builder()
+                            .setResolutionStrategy(
+                                // NOTE: MlKit recommends around 1920x1080 resolution which is 16:9.
+                                // But we do not need a WYSIWYG experience so we prefer the most common
+                                // native sensor aspect ratio which is 4:3.
+                                ResolutionStrategy(
+                                    Size(1920, 1440),
+                                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER,
+                                )
+                            )
+                            .build()
+                    )
+                    .build()
+
+                val qrCodeScanner = BarcodeScanning.getClient(
+                    BarcodeScannerOptions.Builder()
+                        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                        .build()
+                )
+                val invoiceParser = InvoiceParser()
+                val analyzer = InvoiceAnalyzer(qrCodeScanner, invoiceParser)
+
+                imageAnalysisUseCase.setAnalyzer(analyzerExecutor, analyzer)
+
+                MainViewModel(
+                    payUseCase,
+                    imageAnalysisUseCase,
+                    analyzer,
+                    analyzerExecutor
+                )
+            }
+        }
+    }
+
     // NOTE: There are two concurrent things happening in our QR code detection logic:
     // - The Image Analysis Use Case running on some Executor (not main thread)
     // - The MlKit Barcode Scanner processing some image it received in the `ImageAnalysis.Analyzer`
@@ -61,7 +119,6 @@ class MainViewModel(
 
 
     private var cameraProvider: ProcessCameraProvider? = null
-    private val analyzerExecutor = Executors.newCachedThreadPool()
 
 
     // FIXME: This feel wrong. Maybe redesign the whole analyzer/parser stuff.
@@ -69,18 +126,9 @@ class MainViewModel(
         invoiceAnalyzer.invoiceParser.onBolt11(::pay)
     }
 
-    fun rebindCamera(context: Context, lifecycleOwner: LifecycleOwner) {
+    fun bindCamera(context: Context, lifecycleOwner: LifecycleOwner) {
         viewModelScope.launch {
             cameraProvider = ProcessCameraProvider.awaitInstance(context)
-            // FIXME: This **hides** a bug / messy setup:
-            // - In DI we create new instances of the use case when navigating
-            // - We never clean up, in fact the view model is never destroyed
-            // - The old instance gets cleaned up I think, so then there is a non
-            // functional / null use case attached.
-            // - We bind to the MainActivity lifecycle not the view model / component.
-            // need to fix DI and Navigation later...
-            cameraProvider?.unbindAll()
-            imageAnalysisUseCase.setAnalyzer(analyzerExecutor, invoiceAnalyzer)
             cameraProvider?.bindToLifecycle(
                 lifecycleOwner,
                 CameraSelector.DEFAULT_BACK_CAMERA,
@@ -107,5 +155,10 @@ class MainViewModel(
         imageAnalysisUseCase.setAnalyzer(analyzerExecutor, invoiceAnalyzer)
         _uiState.value = PaymentUiState.Idle
         isProcessingFlag.set(false)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        analyzerExecutor.shutdownNow()
     }
 }

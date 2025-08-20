@@ -118,4 +118,7 @@ dependencies {
     // DataStore
     implementation(libs.protobuf.javalite)
     implementation(libs.androidx.datastore)
+
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
 }

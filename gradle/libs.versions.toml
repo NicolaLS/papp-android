@@ -19,6 +19,7 @@ camerax = "1.5.0-beta01"
 accompanist = "0.37.2"
 lnInvoice = "0.0.1"
 mockk = "1.14.4"
+navigationCompose = "2.9.3"
 okhttp = "4.12.0"
 material3 = "1.4.0-alpha15"
 protobufJavalite = "4.31.1"
@@ -39,6 +40,7 @@ androidx-camera-mlkit-vision = { module = "androidx.camera:camera-mlkit-vision",
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 arrow-core-jvm = { module = "io.arrow-kt:arrow-core-jvm", version.ref = "arrowCoreJvm" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
