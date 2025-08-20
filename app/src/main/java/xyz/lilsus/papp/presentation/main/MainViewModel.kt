@@ -54,6 +54,7 @@ class MainViewModel(
                 val application = (this[APPLICATION_KEY] as PappApplication)
                 val walletRepositoryFlow = application.appDependencies.walletRepositoryFlow
                 val analyzerExecutor = application.appDependencies.analyzerExecutor
+                val barcodeScannerExecutor = application.appDependencies.barcodeScannerExecutor
 
                 val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
 
@@ -79,7 +80,7 @@ class MainViewModel(
                         .build()
                 )
                 val invoiceParser = InvoiceParser()
-                val analyzer = InvoiceAnalyzer(qrCodeScanner, invoiceParser)
+                val analyzer = InvoiceAnalyzer(barcodeScannerExecutor, qrCodeScanner, invoiceParser)
 
                 imageAnalysisUseCase.setAnalyzer(analyzerExecutor, analyzer)
 
@@ -160,5 +161,6 @@ class MainViewModel(
     override fun onCleared() {
         super.onCleared()
         analyzerExecutor.shutdownNow()
+        invoiceAnalyzer.executor.shutdownNow()
     }
 }
