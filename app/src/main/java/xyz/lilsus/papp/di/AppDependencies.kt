@@ -36,4 +36,5 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
             )
 
     val analyzerExecutor = Executors.newCachedThreadPool()
+    val barcodeScannerExecutor = Executors.newSingleThreadExecutor()
 }

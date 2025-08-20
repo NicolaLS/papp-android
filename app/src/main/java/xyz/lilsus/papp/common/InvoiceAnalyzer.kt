@@ -7,11 +7,13 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.common.InputImage
+import java.util.concurrent.ExecutorService
 
 // `BarcodeScanner` **should be** configured with:
 // `.setBarcodeFormats(Barcode.FORMAT_QR_CODE)`
 // And no other formats for best performance.
 class InvoiceAnalyzer(
+    val executor: ExecutorService,
     val barcodeScanner: BarcodeScanner,
     val invoiceParser: InvoiceParser
 ) :
@@ -34,20 +36,22 @@ class InvoiceAnalyzer(
                 InputImage.fromMediaImage(image, imageProxy.imageInfo.rotationDegrees)
 
             barcodeScanner.process(inputImage)
-                .addOnSuccessListener { barcodes ->
-                    if (barcodes.isNotEmpty()) {
-                        Log.d(TAG, "Successfully processed ${barcodes.count()} barcodes")
-                        invoiceParser.parse(barcodes[0].rawValue)
-                    }
-                }
-                .addOnFailureListener { error ->
+                .addOnSuccessListener(
+                    executor,
+                    { barcodes ->
+                        if (barcodes.isNotEmpty()) {
+                            Log.d(TAG, "Successfully processed ${barcodes.count()} barcodes")
+                            invoiceParser.parse(barcodes[0].rawValue)
+                        }
+                    })
+                .addOnFailureListener(executor, { error ->
                     Log.e(
                         TAG,
                         "MlKit Barcode Scanner process input image failure (callback)",
                         error
                     )
-                }
-                .addOnCompleteListener { imageProxy.close() }
+                })
+                .addOnCompleteListener(executor, { imageProxy.close() })
         } catch (e: Throwable) {
             Log.e(TAG, "Unexpected error", e)
             imageProxy.close()
