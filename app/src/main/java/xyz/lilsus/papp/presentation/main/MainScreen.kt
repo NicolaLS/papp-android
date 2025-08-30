@@ -3,12 +3,12 @@ package xyz.lilsus.papp.presentation.main
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,24 +44,18 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
         )
     }
 
-    // Settings Button at top-left corner
     Box(
         modifier = Modifier
             .fillMaxSize()
             .systemBarsPadding()
     ) {
-        IconButton(
+        ExtendedFloatingActionButton(
             onClick = onSettingsClick,
+            icon = { Icon(Icons.Filled.Settings, "Extended floating action button.") },
+            text = { Text(text = "Settings") },
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-                .size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                modifier = Modifier.size(32.dp)
-            )
-        }
+                .align(Alignment.BottomStart)
+                .padding(16.dp),
+        )
     }
 }
