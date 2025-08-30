@@ -59,7 +59,7 @@ fun App() {
         }
         composable<RSettings> { backStackEntry ->
             SettingsScreen(
-                onBack = { navController.navigate(RMain) },
+                onBack = { navController.popBackStack() },
                 viewModel(
                     viewModelStoreOwner = backStackEntry,
                     factory = SettingsViewModel.Factory,
