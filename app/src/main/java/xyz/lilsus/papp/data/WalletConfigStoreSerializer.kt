@@ -1,7 +1,10 @@
 package xyz.lilsus.papp.data
 
+import android.content.Context
 import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,4 +33,9 @@ object WalletConfigStoreSerializer : Serializer<WalletConfigStore> {
             val encryptedBytes = Crypto.encrypt(plainBytes)
             output.use { it.write(encryptedBytes) }
         }
+
+    val Context.walletConfigStore: DataStore<WalletConfigStore> by dataStore(
+        fileName = "wallet_config.pb",
+        serializer = WalletConfigStoreSerializer
+    )
 }
