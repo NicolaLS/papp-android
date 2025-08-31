@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import xyz.lilsus.papp.presentation.settings.WalletOption
+import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletOption
 
 @Composable
 fun WalletSelectionDropdown(

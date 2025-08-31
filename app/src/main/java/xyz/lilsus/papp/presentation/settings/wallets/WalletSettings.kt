@@ -14,14 +14,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.common.Resource
-import xyz.lilsus.papp.presentation.settings.SettingsViewModel
-import xyz.lilsus.papp.presentation.settings.WalletOption
+import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletOption
+import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletsViewModel
 import xyz.lilsus.papp.presentation.settings.wallets.components.AddWalletModal
 import xyz.lilsus.papp.presentation.settings.wallets.components.WalletSelectionDropdown
 
 @Composable
 fun WalletSettings(
-    viewModel: SettingsViewModel
+    modifier: Modifier = Modifier,
+    viewModel: WalletsViewModel
 ) {
     val allWallets by viewModel.allWallets.collectAsState()
     val selected by viewModel.selectedWallet.collectAsState()
