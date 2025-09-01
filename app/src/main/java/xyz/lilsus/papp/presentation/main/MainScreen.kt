@@ -1,8 +1,10 @@
 package xyz.lilsus.papp.presentation.main
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -18,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import xyz.lilsus.papp.presentation.main.components.QrCodeBottomSheet
+import xyz.lilsus.papp.presentation.main.components.hero.Hero
 
 @Composable
 fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
@@ -49,6 +52,21 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
             .fillMaxSize()
             .systemBarsPadding()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Hero(
+                modifier = Modifier
+                    .size(192.dp)
+                    .weight(1f)
+            )
+            Column(modifier = Modifier.weight(2f)) {
+                Text("Scan. Pay. Done.")
+            }
+
+        }
         ExtendedFloatingActionButton(
             onClick = onSettingsClick,
             icon = { Icon(Icons.Filled.Settings, "Extended floating action button.") },
