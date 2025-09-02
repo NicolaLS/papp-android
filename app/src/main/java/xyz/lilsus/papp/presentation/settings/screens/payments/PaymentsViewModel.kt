@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.settings.PaymentSettings
 import xyz.lilsus.papp.domain.use_case.settings.GetPaymentSettingsUseCase
@@ -43,16 +42,11 @@ class PaymentsViewModel(
 
     init {
         viewModelScope.launch {
-            getPaymentSettings().collect { resource ->
-                _uiState.value = when (resource) {
-                    is Resource.Error<PaymentSettings> -> null
-                    is Resource.Loading<PaymentSettings> -> null
-                    is Resource.Success<PaymentSettings> -> PaymentsUIState(
-                        resource.data.alwaysConfirmPayment,
-                        resource.data.confirmPaymentAbove,
-                    )
-                }
-            }
+            val paymentSettings = getPaymentSettings()
+            _uiState.value = PaymentsUIState(
+                paymentSettings.alwaysConfirmPayment,
+                paymentSettings.confirmPaymentAbove,
+            )
         }
     }
 
