@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,8 +51,6 @@ private fun PaymentSuccessLayout(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AnimatedCheckmark(modifier = Modifier.size(150.dp))
-        Spacer(Modifier.height(24.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.displaySmall,

@@ -19,6 +19,7 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
 
     private val walletRepositoryFactory = WalletRepositoryFactoryImpl()
 
+    // FIXME: This is kind of stupid
     // Expose a StateFlow of the WalletRepository (auto-updating client)
     val walletRepositoryFlow: StateFlow<WalletRepository?> =
         walletConfigRepository.activeWalletConfigOrNull

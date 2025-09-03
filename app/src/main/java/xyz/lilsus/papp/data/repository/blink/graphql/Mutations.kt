@@ -27,4 +27,16 @@ object Mutations {
 	    }
 	}
 	"""
+
+    const val LnInvoiceFeeProbe = """
+    mutation lnInvoiceFeeProbe(${'$'}input: LnInvoiceFeeProbeInput!) {
+  lnInvoiceFeeProbe(input: ${'$'}input) {
+    errors {
+      message
+    }
+    amount
+  }
 }
+"""
+}
+

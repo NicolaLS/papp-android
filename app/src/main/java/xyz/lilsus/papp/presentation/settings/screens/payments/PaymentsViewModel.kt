@@ -8,11 +8,12 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.settings.PaymentSettings
-import xyz.lilsus.papp.domain.use_case.settings.GetPaymentSettingsUseCase
-import xyz.lilsus.papp.domain.use_case.settings.SavePaymentSettingsUseCase
+import xyz.lilsus.papp.domain.repository.SettingsRepository
 
 
 data class PaymentsUIState(
@@ -21,8 +22,7 @@ data class PaymentsUIState(
 )
 
 class PaymentsViewModel(
-    private val getPaymentSettings: GetPaymentSettingsUseCase,
-    private val savePaymentSettings: SavePaymentSettingsUseCase,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -30,8 +30,7 @@ class PaymentsViewModel(
                 val application = (this[APPLICATION_KEY] as PappApplication)
                 val settingsRepository = application.appDependencies.settingsRepository
                 PaymentsViewModel(
-                    GetPaymentSettingsUseCase(settingsRepository),
-                    SavePaymentSettingsUseCase(settingsRepository)
+                    settingsRepository
                 )
             }
         }
@@ -41,13 +40,12 @@ class PaymentsViewModel(
     val uiState: State<PaymentsUIState?> = _uiState
 
     init {
-        viewModelScope.launch {
-            val paymentSettings = getPaymentSettings()
+        settingsRepository.paymentSettings.onEach {
             _uiState.value = PaymentsUIState(
-                paymentSettings.alwaysConfirmPayment,
-                paymentSettings.confirmPaymentAbove,
+                it.alwaysConfirmPayment,
+                it.confirmPaymentAbove,
             )
-        }
+        }.launchIn(viewModelScope)
     }
 
     fun setConfirmPaymentAlways(v: Boolean) {
@@ -66,8 +64,6 @@ class PaymentsViewModel(
             alwaysConfirmPayment = current.alwaysConfirmPayments,
             confirmPaymentAbove = current.confirmPaymentsAbove
         )
-        viewModelScope.launch {
-            savePaymentSettings(paymentsSettingsModel)
-        }
+        viewModelScope.launch { settingsRepository.setPaymentSettings(paymentsSettingsModel) }
     }
 }

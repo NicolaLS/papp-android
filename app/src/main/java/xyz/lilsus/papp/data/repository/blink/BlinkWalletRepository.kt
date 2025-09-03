@@ -6,6 +6,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import xyz.lilsus.papp.common.Bolt11Invoice
+import xyz.lilsus.papp.data.repository.blink.dto.LnInvoiceFeeProbeResponse
 import xyz.lilsus.papp.data.repository.blink.dto.PayInvoiceResponse
 import xyz.lilsus.papp.data.repository.blink.dto.parse
 import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
@@ -47,6 +48,41 @@ class BlinkWalletRepository(
             onSuccess = { bodyString ->
                 runCatching { json.decodeFromString(PayInvoiceResponse.serializer(), bodyString) }
                     .mapCatching { it.parse() }
+                    .getOrElse { Result.failure(WalletError.Deserialization) }
+            },
+            onFailure = { error ->
+                Result.failure(WalletError.Client(error))
+            }
+        )
+    }
+
+    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Bolt11Invoice): Result<Long> {
+        val variables = buildJsonObject {
+            putJsonObject("input") {
+                put("paymentRequest", bolt11Invoice.encodedSafe)
+                put("walletId", walletId)
+            }
+        }
+
+        val result = client.post(Mutations.LnInvoiceFeeProbe, variables)
+        println("BLINK: result: $result")
+
+        return result.fold(
+            onSuccess = { bodyString ->
+                runCatching {
+                    json.decodeFromString(
+                        LnInvoiceFeeProbeResponse.serializer(),
+                        bodyString
+                    )
+                }
+                    .mapCatching {
+                        val error = it.data.lnInvoiceFeeProbe.errors?.getOrNull(0)
+                        if (error == null) {
+                            Result.success(it.data.lnInvoiceFeeProbe.amount)
+                        } else {
+                            Result.failure(WalletError.ApiError(error.message))
+                        }
+                    }
                     .getOrElse { Result.failure(WalletError.Deserialization) }
             },
             onFailure = { error ->

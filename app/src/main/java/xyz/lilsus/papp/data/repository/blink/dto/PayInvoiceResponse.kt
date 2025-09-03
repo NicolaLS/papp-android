@@ -1,6 +1,5 @@
 package xyz.lilsus.papp.data.repository.blink.dto
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -19,14 +18,6 @@ data class Transaction(
     val settlementAmount: Int,
     val settlementFee: Int,
     val status: TxStatus
-)
-
-@Serializable
-@SerialName("error")
-data class ErrorDto(
-    val code: String? = null,
-    val message: String,
-    val path: List<String>? = emptyList()
 )
 
 @Serializable

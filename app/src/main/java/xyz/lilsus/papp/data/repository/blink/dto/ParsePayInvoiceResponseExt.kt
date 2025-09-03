@@ -22,7 +22,7 @@ fun PayInvoiceResponse.parse(): Result<SendPaymentData> {
         PaymentSendResult.FAILURE -> {
             val errorMessage = payload.errors?.firstOrNull()?.message
                 ?: "Unknown error"
-            Result.failure(WalletError.PaymentError("Error sending payment: $errorMessage"))
+            Result.failure(WalletError.ApiError("Error sending payment: $errorMessage"))
         }
 
         PaymentSendResult.SUCCESS -> {
