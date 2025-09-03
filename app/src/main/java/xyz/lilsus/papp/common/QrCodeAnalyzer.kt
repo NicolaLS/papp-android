@@ -12,14 +12,21 @@ import java.util.concurrent.ExecutorService
 // `BarcodeScanner` **should be** configured with:
 // `.setBarcodeFormats(Barcode.FORMAT_QR_CODE)`
 // And no other formats for best performance.
-class InvoiceAnalyzer(
+class QrCodeAnalyzer(
     val executor: ExecutorService,
     val barcodeScanner: BarcodeScanner,
-    val invoiceParser: InvoiceParser
 ) :
     ImageAnalysis.Analyzer {
     companion object {
-        const val TAG = "INVOICE_ANALYZER"
+        const val TAG = "QR_CODE_ANALYZER"
+    }
+
+    private lateinit var callback: (String) -> Unit
+
+    fun onQrCodeDetected(cb: (String) -> Unit): QrCodeAnalyzer {
+        Log.d(TAG, "Attached onQrCodeDetected callback")
+        this.callback = cb
+        return this
     }
 
     @OptIn(ExperimentalGetImage::class)
@@ -37,20 +44,20 @@ class InvoiceAnalyzer(
 
             barcodeScanner.process(inputImage)
                 .addOnSuccessListener(
-                    executor,
-                    { barcodes ->
-                        if (barcodes.isNotEmpty()) {
-                            Log.d(TAG, "Successfully processed ${barcodes.count()} barcodes")
-                            invoiceParser.parse(barcodes[0].rawValue)
-                        }
-                    })
-                .addOnFailureListener(executor, { error ->
+                    executor
+                ) { barcodes ->
+                    if (barcodes.isNotEmpty()) {
+                        Log.d(TAG, "Successfully processed ${barcodes.count()} barcodes")
+                        barcodes[0].rawValue?.let(callback)
+                    }
+                }
+                .addOnFailureListener(executor) { error ->
                     Log.e(
                         TAG,
-                        "MlKit Barcode Scanner process input image failure (callback)",
+                        "MlKit Barcode Scanner process input image failure",
                         error
                     )
-                })
+                }
                 .addOnCompleteListener(executor, { imageProxy.close() })
         } catch (e: Throwable) {
             Log.e(TAG, "Unexpected error", e)

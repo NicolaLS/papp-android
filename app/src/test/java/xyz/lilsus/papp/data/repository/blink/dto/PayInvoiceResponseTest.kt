@@ -67,7 +67,7 @@ class PayInvoiceResponseTest {
         )
 
         var sendPaymentResult = responseFailureStatusWithoutErrors.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.PaymentError)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.ApiError)
         assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
@@ -78,9 +78,7 @@ class PayInvoiceResponseTest {
                 PaymentSendPayload(
                     errors = listOf(
                         xyz.lilsus.papp.data.repository.blink.dto.ErrorDto(
-                            "69420",
-                            "error message",
-                            listOf("path0", "path1")
+                            "you've done messed up :*(",
                         )
                     ),
                     status = PaymentSendResult.FAILURE,
@@ -90,7 +88,7 @@ class PayInvoiceResponseTest {
         )
 
         val sendPaymentResult = responseFailureStatusWithErrors.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.PaymentError)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.ApiError)
         assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 

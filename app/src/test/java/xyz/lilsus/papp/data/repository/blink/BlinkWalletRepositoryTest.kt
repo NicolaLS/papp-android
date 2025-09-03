@@ -192,7 +192,7 @@ class BlinkWalletRepositoryTest {
         } returns Result.success(jsonResponseStub)
 
         val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletError.PaymentError>()
+        res.shouldBeFailure<WalletError.ApiError>()
         res.exceptionOrNull()!!.message.shouldContain("Error sending payment:")
         res.exceptionOrNull()!!.message.shouldContain("Some error")
     }

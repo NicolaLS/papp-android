@@ -8,8 +8,9 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -23,40 +24,67 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.common.Bolt11Invoice
-import xyz.lilsus.papp.common.InvoiceAnalyzer
-import xyz.lilsus.papp.common.InvoiceParser
+import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.QrCodeAnalyzer
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.SendPaymentData
+import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
+import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.ProbeFeeUseCase
+import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
+import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
 
-sealed class PaymentUiState {
-    object Idle : PaymentUiState()
-    object Loading : PaymentUiState()
-    data class Received(val result: SendPaymentData) : PaymentUiState()
-    data class Error(val message: String?) : PaymentUiState()
+// FIXME: Having these classes here is awkward...but the whole business logic regarding
+// the model/errors for the repos/use cases is messed up right now. So this is just to get
+// it to work and I'll clean that up later.
+
+sealed class PaymentResult {
+    data class Success(val data: Pair<SendPaymentData, WalletTypeEntry>) : PaymentResult()
+    data class Error(val message: String?) : PaymentResult()
 }
 
-// TODO: DI with Hilt
+
+sealed class Intent {
+    object Dismiss : Intent()
+    data class BindCamera(val context: Context, val lifecycleOwner: LifecycleOwner) : Intent()
+    data class PayInvoice(val invoice: Invoice.Bolt11) : Intent()
+}
+
+sealed class UiState {
+    object Active : UiState()
+    data class QrDetected(val invalidInvoice: Invoice.Invalid?) : UiState()
+
+    data class ConfirmPayment(val data: InvoiceConfirmationData) : UiState()
+
+    object PerformingPayment : UiState()
+    data class PaymentDone(val result: PaymentResult) : UiState()
+}
+
 class MainViewModel(
     val payUseCase: PayInvoiceUseCase,
+    val shouldConfirmPayment: ShouldConfirmPaymentUseCase,
     val imageAnalysisUseCase: ImageAnalysis,
-    val invoiceAnalyzer: InvoiceAnalyzer,
+    val invoiceAnalyzer: QrCodeAnalyzer,
     val analyzerExecutor: ExecutorService,
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as PappApplication)
+                val settingsRepository = application.appDependencies.settingsRepository
                 val walletRepositoryFlow = application.appDependencies.walletRepositoryFlow
                 val analyzerExecutor = application.appDependencies.analyzerExecutor
                 val barcodeScannerExecutor = application.appDependencies.barcodeScannerExecutor
 
                 val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
+                val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow)
+                val shouldConfirmPaymentUseCase =
+                    ShouldConfirmPaymentUseCase(settingsRepository, probeFeeUseCase)
 
                 val imageAnalysisUseCase = ImageAnalysis.Builder()
                     .setResolutionSelector(
@@ -79,13 +107,13 @@ class MainViewModel(
                         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                         .build()
                 )
-                val invoiceParser = InvoiceParser()
-                val analyzer = InvoiceAnalyzer(barcodeScannerExecutor, qrCodeScanner, invoiceParser)
+                val analyzer = QrCodeAnalyzer(barcodeScannerExecutor, qrCodeScanner)
 
                 imageAnalysisUseCase.setAnalyzer(analyzerExecutor, analyzer)
 
                 MainViewModel(
                     payUseCase,
+                    shouldConfirmPaymentUseCase,
                     imageAnalysisUseCase,
                     analyzer,
                     analyzerExecutor
@@ -113,21 +141,35 @@ class MainViewModel(
     // See: https://developer.android.com/reference/androidx/camera/core/ImageAnalysis#setAnalyzer(java.util.concurrent.Executor,androidx.camera.core.ImageAnalysis.Analyzer)
     // Side note: I am not sure if the executor passed in `ImageAnalysis.setAnalyzer()` is the same as
     // ImageAnalyzer.Builder().setBackgroundExecutor()...but I assume so...
+
+    // TODO: Check if removing the atomic boolean and just using the main thread for the
+    // barcode scanner executor improves performance.
     private val isProcessingFlag = AtomicBoolean(false)
-
-    private val _uiState = mutableStateOf<PaymentUiState>(PaymentUiState.Idle)
-    val uiState: State<PaymentUiState> = _uiState
-
 
     private var cameraProvider: ProcessCameraProvider? = null
 
+    var uiState by mutableStateOf<UiState>(UiState.Active)
+        private set
 
-    // FIXME: This feel wrong. Maybe redesign the whole analyzer/parser stuff.
     init {
-        invoiceAnalyzer.invoiceParser.onBolt11(::pay)
+        invoiceAnalyzer.onQrCodeDetected {
+            // Callback is called from another thread (not main thread).
+            if (isProcessingFlag.compareAndSet(false, true)) {
+                imageAnalysisUseCase.clearAnalyzer()
+                onQrDetected(it)
+            }
+        }
     }
 
-    fun bindCamera(context: Context, lifecycleOwner: LifecycleOwner) {
+    fun dispatch(intent: Intent) {
+        when (intent) {
+            Intent.Dismiss -> reset()
+            is Intent.BindCamera -> bindCamera(intent.context, intent.lifecycleOwner)
+            is Intent.PayInvoice -> executePaymentProposal(intent.invoice)
+        }
+    }
+
+    private fun bindCamera(context: Context, lifecycleOwner: LifecycleOwner) {
         viewModelScope.launch {
             cameraProvider = ProcessCameraProvider.awaitInstance(context)
             cameraProvider?.bindToLifecycle(
@@ -138,24 +180,52 @@ class MainViewModel(
         }
     }
 
-    // TODO: Handle amount-less bolt11
-    fun pay(bolt11Invoice: Bolt11Invoice) {
-        if (isProcessingFlag.compareAndSet(false, true)) {
-            imageAnalysisUseCase.clearAnalyzer()
-            payUseCase(bolt11Invoice).onEach { result ->
-                _uiState.value = when (result) {
-                    is Resource.Loading -> PaymentUiState.Loading
-                    is Resource.Success -> PaymentUiState.Received(result.data.first)
-                    is Resource.Error -> PaymentUiState.Error(result.message)
+    private fun reset() {
+        uiState = UiState.Active
+        imageAnalysisUseCase.setAnalyzer(analyzerExecutor, invoiceAnalyzer)
+        isProcessingFlag.set(false)
+    }
+
+    private fun onQrDetected(rawQr: String) {
+        Invoice.parse(rawQr).also {
+            when (it) {
+                is Invoice.Bolt11 -> {
+                    uiState = UiState.QrDetected(null)
+                    approvePaymentProposal(it)
                 }
-            }.launchIn(viewModelScope)
+                // TODO: Workflow for Invoices without amount (or LNURLs)
+                // For now, treat amount-less invoice as invalid.
+                is Invoice.Invalid -> {
+                    uiState = UiState.QrDetected(it)
+                }
+            }
         }
     }
 
-    fun reset() {
-        imageAnalysisUseCase.setAnalyzer(analyzerExecutor, invoiceAnalyzer)
-        _uiState.value = PaymentUiState.Idle
-        isProcessingFlag.set(false)
+    private fun approvePaymentProposal(invoice: Invoice.Bolt11) {
+        viewModelScope.launch {
+            when (val confirm = shouldConfirmPayment(invoice)) {
+                ShouldConfirmPaymentResult.ConfirmationNotRequired -> {
+                    executePaymentProposal(invoice)
+                }
+
+                is ShouldConfirmPaymentResult.ConfirmationRequired -> {
+                    uiState = UiState.ConfirmPayment(confirm.data)
+                }
+            }
+        }
+    }
+
+    private fun executePaymentProposal(confirmedInvoice: Invoice.Bolt11) {
+        payUseCase(confirmedInvoice).onEach {
+            uiState = when (it) {
+                is Resource.Error -> UiState.PaymentDone(PaymentResult.Error(it.message))
+                is Resource.Loading<*> -> UiState.PerformingPayment
+                is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> UiState.PaymentDone(
+                    PaymentResult.Success(it.data)
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
     override fun onCleared() {

@@ -25,3 +25,7 @@ sealed class Bolt11Invoice private constructor(
             Bolt11Invoice(encodedSafe, paymentRequest)
     }
 }
+
+fun Bolt11Invoice.amountSatoshiOrNull(): Long? {
+    return this.paymentRequest.amount.getOrNull()?.satoshi
+}

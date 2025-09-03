@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
+import xyz.lilsus.papp.presentation.main.UiState
 
 data class SquareSpec(
     val x: Float,
@@ -21,6 +22,7 @@ data class SquareSpec(
 @Composable
 fun Hero(
     modifier: Modifier = Modifier,
+    uiState: UiState,
     color: Color = MaterialTheme.colorScheme.onSurface
 ) {
     val squares = remember {
