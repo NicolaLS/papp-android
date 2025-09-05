@@ -1,6 +1,7 @@
 package xyz.lilsus.papp.di
 
 import android.content.Context
+import android.os.Vibrator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -11,6 +12,7 @@ import xyz.lilsus.papp.data.repository.WalletConfigRepositoryImpl
 import xyz.lilsus.papp.data.repository.WalletRepositoryFactoryImpl
 import xyz.lilsus.papp.data.settingsDataStore
 import xyz.lilsus.papp.domain.repository.WalletRepository
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class AppDependencies(context: Context, private val applicationScope: CoroutineScope) {
@@ -30,7 +32,7 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
                 initialValue = null
             )
 
-    // FIXME
-    val analyzerExecutor = Executors.newCachedThreadPool()
-    val barcodeScannerExecutor = Executors.newSingleThreadExecutor()
+    val analyzerExecutor: ExecutorService = Executors.newCachedThreadPool()
+    val barcodeScannerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    val vibrator: Vibrator? = context.getSystemService(Vibrator::class.java)
 }
