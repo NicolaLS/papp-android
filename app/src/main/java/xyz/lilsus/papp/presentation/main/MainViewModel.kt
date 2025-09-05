@@ -1,6 +1,9 @@
 package xyz.lilsus.papp.presentation.main
 
 import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -71,6 +74,7 @@ class MainViewModel(
     val imageAnalysisUseCase: ImageAnalysis,
     val invoiceAnalyzer: QrCodeAnalyzer,
     val analyzerExecutor: ExecutorService,
+    val vibrator: Vibrator?,
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -80,6 +84,7 @@ class MainViewModel(
                 val walletRepositoryFlow = application.appDependencies.walletRepositoryFlow
                 val analyzerExecutor = application.appDependencies.analyzerExecutor
                 val barcodeScannerExecutor = application.appDependencies.barcodeScannerExecutor
+                val vibrator = application.appDependencies.vibrator
 
                 val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
                 val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow)
@@ -116,7 +121,8 @@ class MainViewModel(
                     shouldConfirmPaymentUseCase,
                     imageAnalysisUseCase,
                     analyzer,
-                    analyzerExecutor
+                    analyzerExecutor,
+                    vibrator
                 )
             }
         }
@@ -166,6 +172,15 @@ class MainViewModel(
             Intent.Dismiss -> reset()
             is Intent.BindCamera -> bindCamera(intent.context, intent.lifecycleOwner)
             is Intent.PayInvoice -> executePaymentProposal(intent.invoice)
+        }
+    }
+
+    private fun vibrate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // API 29+ (Android 10+)
+            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
+        } else {
+            vibrator?.vibrate(50)
         }
     }
 
@@ -219,11 +234,18 @@ class MainViewModel(
     private fun executePaymentProposal(confirmedInvoice: Invoice.Bolt11) {
         payUseCase(confirmedInvoice).onEach {
             uiState = when (it) {
-                is Resource.Error -> UiState.PaymentDone(PaymentResult.Error(it.message))
+                is Resource.Error -> {
+                    vibrate()
+                    UiState.PaymentDone(PaymentResult.Error(it.message))
+                }
+
                 is Resource.Loading<*> -> UiState.PerformingPayment
-                is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> UiState.PaymentDone(
-                    PaymentResult.Success(it.data)
-                )
+                is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> {
+                    vibrate()
+                    UiState.PaymentDone(
+                        PaymentResult.Success(it.data)
+                    )
+                }
             }
         }.launchIn(viewModelScope)
     }
