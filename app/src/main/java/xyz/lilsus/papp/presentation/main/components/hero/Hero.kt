@@ -160,7 +160,6 @@ private fun HeroPreview() {
     val sendPaymentData = SendPaymentData.Success(
         amountPaid = 1000,
         feePaid = 10,
-        memo = "Test"
     )
     val states = listOf(
         UiState.Active,

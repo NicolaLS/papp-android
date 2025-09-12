@@ -1,0 +1,12 @@
+mutation LnInvoicePaymentSend($input: LnInvoicePaymentInput!) {
+    lnInvoicePaymentSend(input: $input) {
+        status
+        errors {
+            message
+        }
+        transaction {
+            settlementAmount
+            settlementFee
+        }
+    }
+}

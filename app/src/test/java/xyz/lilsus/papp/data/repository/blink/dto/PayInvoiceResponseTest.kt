@@ -5,7 +5,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import xyz.lilsus.papp.domain.model.SendPaymentData
-import xyz.lilsus.papp.domain.model.WalletError
+import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import kotlin.math.abs
 
 class PayInvoiceResponseTest {
@@ -21,7 +21,7 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseMissingStatus.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.MissingStatus)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletRepositoryError.MissingStatus)
     }
 
     @Test
@@ -67,7 +67,7 @@ class PayInvoiceResponseTest {
         )
 
         var sendPaymentResult = responseFailureStatusWithoutErrors.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.ApiError)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletRepositoryError.ApiError)
         assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
@@ -88,7 +88,7 @@ class PayInvoiceResponseTest {
         )
 
         val sendPaymentResult = responseFailureStatusWithErrors.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.ApiError)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletRepositoryError.ApiError)
         assertTrue(sendPaymentResult.exceptionOrNull()!!.message!!.contains("Error sending payment:"))
     }
 
@@ -104,7 +104,7 @@ class PayInvoiceResponseTest {
             )
         )
         val sendPaymentResult = responseSuccessStatusNoTransaction.parse()
-        assertTrue(sendPaymentResult.exceptionOrNull() is WalletError.MissingTransaction)
+        assertTrue(sendPaymentResult.exceptionOrNull() is WalletRepositoryError.MissingTransaction)
     }
 
     @Test

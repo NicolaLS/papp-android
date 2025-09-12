@@ -38,6 +38,7 @@ import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ProbeFeeUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
+import xyz.lilsus.papp.presentation.handleErrorMessage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -234,12 +235,12 @@ class MainViewModel(
     private fun executePaymentProposal(confirmedInvoice: Invoice.Bolt11) {
         payUseCase(confirmedInvoice).onEach {
             uiState = when (it) {
+                Resource.Loading -> UiState.PerformingPayment
                 is Resource.Error -> {
                     vibrate()
-                    UiState.PaymentDone(PaymentResult.Error(it.message))
+                    UiState.PaymentDone(PaymentResult.Error(handleErrorMessage(it.error)))
                 }
 
-                is Resource.Loading<*> -> UiState.PerformingPayment
                 is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> {
                     vibrate()
                     UiState.PaymentDone(

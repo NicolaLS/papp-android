@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
+import xyz.lilsus.papp.presentation.handleErrorMessage
 import xyz.lilsus.papp.presentation.main.UiState
 
 @Composable
@@ -32,13 +33,13 @@ fun ConfirmationBottomSheet(
     onPay: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val feeState by uiState.data.feeFlow.collectAsState(initial = Resource.Loading())
+    val feeState by uiState.data.feeFlow.collectAsState(initial = Resource.Loading)
     val fee = feeState
 
     val feeText = when (fee) {
-        is Resource.Loading -> "Loading"
+        Resource.Loading -> "Loading"
         is Resource.Success<Pair<Long, WalletTypeEntry>> -> "Fee: ${fee.data.first}"
-        is Resource.Error<Pair<Long, WalletTypeEntry>> -> "Error: ${fee.message}"
+        is Resource.Error -> handleErrorMessage(fee.error)
     }
 
     val amount = uiState.data.invoice.amountSatoshi
