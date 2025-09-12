@@ -54,11 +54,11 @@ class WalletsViewModel(
     }
 
     val allWallets = getAllWallets().stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), Resource.Loading()
+        viewModelScope, SharingStarted.WhileSubscribed(5000), Resource.Loading
     )
 
     val activeWallet = getActiveWallet().stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), Resource.Loading()
+        viewModelScope, SharingStarted.WhileSubscribed(5000), Resource.Loading
     )
 
     val selectedWallet: StateFlow<WalletOption> = activeWallet.map { resource ->

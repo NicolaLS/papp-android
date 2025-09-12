@@ -20,7 +20,7 @@ import xyz.lilsus.papp.data.repository.blink.graphql.GraphQLError
 import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
 import xyz.lilsus.papp.data.repository.blink.graphql.OkHttpGraphQLHttpClient
 import xyz.lilsus.papp.domain.model.SendPaymentData
-import xyz.lilsus.papp.domain.model.WalletError
+import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import java.io.IOException
 
 class BlinkWalletRepositoryTest {
@@ -72,7 +72,7 @@ class BlinkWalletRepositoryTest {
         } returns Result.failure(GraphQLError.EmptyBody)
 
         val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletError.Client>()
+        res.shouldBeFailure<WalletRepositoryError.Client>()
         res.exceptionOrNull()!!.cause.shouldBe(GraphQLError.EmptyBody)
     }
 
@@ -86,7 +86,7 @@ class BlinkWalletRepositoryTest {
         } returns Result.failure(GraphQLError.HttpError(500, "Internal Server Error"))
 
         val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletError.Client>()
+        res.shouldBeFailure<WalletRepositoryError.Client>()
         res.exceptionOrNull()!!.cause.shouldBe(GraphQLError.HttpError(500, "Internal Server Error"))
     }
 
@@ -100,7 +100,7 @@ class BlinkWalletRepositoryTest {
         } returns Result.failure(GraphQLError.NetworkError(IOException("Timeout")))
 
         val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletError.Client>()
+        res.shouldBeFailure<WalletRepositoryError.Client>()
         val cause = res.exceptionOrNull()!!.cause
         cause.shouldBeInstanceOf<GraphQLError.NetworkError>()
         cause.cause.shouldBeInstanceOf<IOException>()
@@ -115,7 +115,7 @@ class BlinkWalletRepositoryTest {
             blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
         res.shouldBeFailure()
-        res.exceptionOrNull().shouldBeInstanceOf<WalletError.Deserialization>()
+        res.exceptionOrNull().shouldBeInstanceOf<WalletRepositoryError.Deserialization>()
     }
 
     @Test
@@ -128,7 +128,7 @@ class BlinkWalletRepositoryTest {
             blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
         res.shouldBeFailure()
-        res.exceptionOrNull().shouldBeInstanceOf<WalletError.MissingStatus>()
+        res.exceptionOrNull().shouldBeInstanceOf<WalletRepositoryError.MissingStatus>()
     }
 
     @Test
@@ -141,7 +141,7 @@ class BlinkWalletRepositoryTest {
             blinkWalletRepository.payBolt11Invoice(BOLT11)
         }
         res.shouldBeFailure()
-        res.exceptionOrNull().shouldBeInstanceOf<WalletError.MissingTransaction>()
+        res.exceptionOrNull().shouldBeInstanceOf<WalletRepositoryError.MissingTransaction>()
     }
 
     @Test
@@ -192,7 +192,7 @@ class BlinkWalletRepositoryTest {
         } returns Result.success(jsonResponseStub)
 
         val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletError.ApiError>()
+        res.shouldBeFailure<WalletRepositoryError.ApiError>()
         res.exceptionOrNull()!!.message.shouldContain("Error sending payment:")
         res.exceptionOrNull()!!.message.shouldContain("Some error")
     }

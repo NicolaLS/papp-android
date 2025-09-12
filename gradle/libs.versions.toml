@@ -1,5 +1,6 @@
 [versions]
 agp = "8.13.0"
+apollo = "4.3.3"
 arrowCoreJvm = "1.2.0"
 barcodeScanning = "17.3.0"
 cameraMlkitVision = "1.4.2"
@@ -26,15 +27,12 @@ protobufJavalite = "4.31.1"
 slf4jSimple = "2.0.9"
 
 [libraries]
-# Contains the basic camera functionality such as SurfaceRequest
+# GraphQl
+apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
-# Contains the CameraXViewfinder composable
 androidx-camera-compose = { module = "androidx.camera:camera-compose", version.ref = "camerax" }
-# Allows us to bind the camera preview to our UI lifecycle
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
-# The specific camera implementation that renders the preview
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
-# The helper library to grant the camera permission
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 androidx-camera-mlkit-vision = { module = "androidx.camera:camera-mlkit-vision", version.ref = "cameraMlkitVision" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,6 +60,7 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 ln-invoice = { module = "app.cash.lninvoice:ln-invoice", version.ref = "lnInvoice" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 
@@ -70,3 +69,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 protobuf = { id = "com.google.protobuf", version = "0.9.5" }
+apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }

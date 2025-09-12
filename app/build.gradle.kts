@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "1.9.10"
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.apollo)
 }
 
 android {
@@ -67,6 +68,18 @@ protobuf {
     }
 }
 
+apollo {
+    service("service") {
+        packageName.set("xyz.lilsus.papp.graphql")
+        mapScalarToKotlinLong("SatAmount")
+        mapScalarToKotlinLong("SignedAmount")
+        introspection {
+            endpointUrl.set("https://api.blink.sv/graphql")
+            schemaFile.set(file("src/main/graphql/blink/schema.graphqls"))
+        }
+    }
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -103,6 +116,7 @@ dependencies {
 
     // OkHttp
     implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
 
     // Kotlinx Serialization (Core + JSON)
     implementation(libs.kotlinx.serialization.core)
@@ -121,4 +135,7 @@ dependencies {
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
+
+    // GraphQl (Blink Wallet)
+    implementation(libs.apollo.runtime)
 }
