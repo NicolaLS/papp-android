@@ -6,6 +6,9 @@ import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.apollographql.apollo.exception.ApolloNetworkException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import xyz.lilsus.papp.common.Bolt11Invoice
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
@@ -22,6 +25,7 @@ import kotlin.math.abs
 class BlinkWalletRepository(
     private val walletId: String,
     private val apolloClient: ApolloClient,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : WalletRepository {
 
     companion object {
@@ -34,7 +38,9 @@ class BlinkWalletRepository(
         apiCall: suspend () -> ApolloResponse<D>,
         onSuccess: (D) -> Resource<R>
     ): Resource<R> {
-        val response = apiCall()
+        val response = withContext(dispatcher) {
+            apiCall()
+        }
         Log.d(TAG, "Response: $response")
 
         val exception = response.exception
