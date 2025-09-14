@@ -1,33 +1,33 @@
 package xyz.lilsus.papp.domain.model
 
-sealed class Resource<out T> {
-    data class Success<out T>(val data: T) : Resource<T>()
-    data class Error(val error: WalletRepositoryError) : Resource<Nothing>()
-    object Loading : Resource<Nothing>()
+sealed class Resource<out T, out E> {
+    data class Success<out T>(val data: T) : Resource<T, Nothing>()
+    data class Error<out E>(val error: E) : Resource<Nothing, E>()
+    object Loading : Resource<Nothing, Nothing>()
 }
 
-inline fun <T> Resource<T>.onSuccess(action: (T) -> Unit): Resource<T> {
+inline fun <T, E> Resource<T, E>.onSuccess(action: (T) -> Unit): Resource<T, E> {
     if (this is Resource.Success) {
         action(data)
     }
     return this
 }
 
-inline fun <T> Resource<T>.onError(action: (WalletRepositoryError) -> Unit): Resource<T> {
+inline fun <T, E> Resource<T, E>.onError(action: (E) -> Unit): Resource<T, E> {
     if (this is Resource.Error) {
         action(error)
     }
     return this
 }
 
-inline fun <T> Resource<T>.onLoading(action: () -> Unit): Resource<T> {
+inline fun <T, E> Resource<T, E>.onLoading(action: () -> Unit): Resource<T, E> {
     if (this is Resource.Loading) {
         action()
     }
     return this
 }
 
-inline fun <T, R> Resource<T>.map(transform: (T) -> R): Resource<R> {
+inline fun <T, R, E> Resource<T, E>.map(transform: (T) -> R): Resource<R, E> {
     return when (this) {
         is Resource.Success -> Resource.Success(transform(data))
         is Resource.Error -> this

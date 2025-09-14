@@ -8,8 +8,8 @@ import xyz.lilsus.papp.domain.model.config.WalletEntry
 import xyz.lilsus.papp.domain.repository.WalletConfigRepository
 
 class GetAllWalletsUseCase(private val repository: WalletConfigRepository) {
-    operator fun invoke(): Flow<Resource<List<WalletEntry>>> =
+    operator fun invoke(): Flow<Resource<List<WalletEntry>, Nothing>> =
         repository.walletConfigList
-            .map { Resource.Success(it) as Resource<List<WalletEntry>> }
+            .map { Resource.Success(it) as Resource<List<WalletEntry>, Nothing> }
             .onStart { emit(Resource.Loading) }
 }
