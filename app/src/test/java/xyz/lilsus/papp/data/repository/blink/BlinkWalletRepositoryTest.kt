@@ -115,8 +115,8 @@ class BlinkWalletRepositoryTest {
         apolloClient.enqueueTestResponse(testSuccessFeeQuery, testSuccessFeeData)
 
         runBlocking {
-            val actualPay = repository.payBolt11Invoice(TEST_INVOICE_SUCCESS.bolt11)
-            val actualFee = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS.bolt11)
+            val actualPay = repository.payBolt11Invoice(TEST_INVOICE_SUCCESS)
+            val actualFee = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS)
             actualPay.shouldBeInstanceOf<Resource.Success<*>>()
             actualFee.shouldBeInstanceOf<Resource.Success<*>>()
             (actualPay.data).shouldBeInstanceOf<SendPaymentData.Success>()
@@ -153,7 +153,7 @@ class BlinkWalletRepositoryTest {
         apolloClient.enqueueTestResponse(testAlreadyPaidQuery, testAlreadyPaidDataNoTransaction)
 
         runBlocking {
-            val actual = repository.payBolt11Invoice(TEST_INVOICE_ALREADY_PAID.bolt11)
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_ALREADY_PAID)
             actual.shouldBeInstanceOf<Resource.Success<*>>()
             (actual.data).shouldBeInstanceOf<SendPaymentData.AlreadyPaid>()
         }
@@ -178,7 +178,7 @@ class BlinkWalletRepositoryTest {
         apolloClient.enqueueTestResponse(testPendingQuery, testPendingData)
 
         runBlocking {
-            val actual = repository.payBolt11Invoice(TEST_INVOICE_PENDING.bolt11)
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_PENDING)
             actual.shouldBeInstanceOf<Resource.Success<*>>()
             (actual.data).shouldBeInstanceOf<SendPaymentData.Pending>()
         }
@@ -203,7 +203,7 @@ class BlinkWalletRepositoryTest {
         apolloClient.enqueueTestResponse(testFailureQuery, testFailureData)
 
         runBlocking {
-            val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
             actual.shouldBeInstanceOf<Resource.Error>()
             (actual.error).shouldBeInstanceOf<WalletRepositoryError.WalletError>()
             actual.error.message.shouldNotBeNull()
@@ -230,7 +230,7 @@ class BlinkWalletRepositoryTest {
         apolloClient.enqueueTestResponse(testUnknownQuery, testUnknownData)
 
         runBlocking {
-            val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
             actual.shouldBeInstanceOf<Resource.Error>()
             (actual.error).shouldBeInstanceOf<WalletRepositoryError.UnexpectedError>()
         }
@@ -252,7 +252,7 @@ class BlinkWalletRepositoryTest {
         )
         apolloClient.enqueueTestResponse(testSuccessFeeQuery, testSuccessFeeDataNoAmount)
         runBlocking {
-            val actual = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS.bolt11)
+            val actual = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS)
             actual.shouldBeInstanceOf<Resource.Error>()
             (actual.error).shouldBeInstanceOf<WalletRepositoryError.UnexpectedError>()
         }
@@ -271,11 +271,11 @@ class BlinkWalletRepositoryTest {
             apolloMockServer.enqueue(mockedHttpResponse)
             apolloMockServer.enqueue(mockedHttpResponse)
 
-            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
             payResult.shouldBeInstanceOf<Resource.Error>()
             payResult.error.shouldBeInstanceOf<WalletRepositoryError.AuthenticationError>()
 
-            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE.bolt11)
+            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE)
             probeResult.shouldBeInstanceOf<Resource.Error>()
             probeResult.error.shouldBeInstanceOf<WalletRepositoryError.AuthenticationError>()
         }
@@ -294,11 +294,11 @@ class BlinkWalletRepositoryTest {
             apolloMockServer.enqueue(mockedHttpResponse)
             apolloMockServer.enqueue(mockedHttpResponse)
 
-            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
             payResult.shouldBeInstanceOf<Resource.Error>()
             payResult.error.shouldBeInstanceOf<WalletRepositoryError.ServerError>()
 
-            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE.bolt11)
+            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE)
             probeResult.shouldBeInstanceOf<Resource.Error>()
             probeResult.error.shouldBeInstanceOf<WalletRepositoryError.ServerError>()
         }
@@ -311,11 +311,11 @@ class BlinkWalletRepositoryTest {
             // Shutting down the server will cause a network exception
             apolloMockServer.close()
 
-            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
             payResult.shouldBeInstanceOf<Resource.Error>()
             payResult.error.shouldBeInstanceOf<WalletRepositoryError.NetworkError>()
 
-            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE.bolt11)
+            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE)
             probeResult.shouldBeInstanceOf<Resource.Error>()
             probeResult.error.shouldBeInstanceOf<WalletRepositoryError.NetworkError>()
         }

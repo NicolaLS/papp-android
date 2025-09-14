@@ -9,7 +9,7 @@ import com.apollographql.apollo.exception.ApolloNetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import xyz.lilsus.papp.common.Bolt11Invoice
+import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
@@ -74,10 +74,10 @@ class BlinkWalletRepository(
         return onSuccess(data)
     }
 
-    override suspend fun payBolt11Invoice(bolt11Invoice: Bolt11Invoice): Resource<SendPaymentData> {
+    override suspend fun payBolt11Invoice(bolt11Invoice: Invoice.Bolt11): Resource<SendPaymentData> {
         val mutation = LnInvoicePaymentSendMutation(
             LnInvoicePaymentInput(
-                paymentRequest = bolt11Invoice.encodedSafe,
+                paymentRequest = bolt11Invoice.bolt11.encodedSafe,
                 walletId = walletId
             )
         )
@@ -113,10 +113,10 @@ class BlinkWalletRepository(
         }
     }
 
-    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Bolt11Invoice): Resource<Long> {
+    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Invoice.Bolt11): Resource<Long> {
         val mutation = LnInvoiceFeeProbeMutation(
             LnInvoiceFeeProbeInput(
-                paymentRequest = bolt11Invoice.encodedSafe,
+                paymentRequest = bolt11Invoice.bolt11.encodedSafe,
                 walletId = walletId
             )
         )
