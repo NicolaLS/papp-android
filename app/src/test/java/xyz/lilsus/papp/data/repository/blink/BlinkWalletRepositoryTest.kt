@@ -205,7 +205,7 @@ class BlinkWalletRepositoryTest {
 
         runBlocking {
             val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
-            actual.shouldBeInstanceOf<Resource.Error>()
+            actual.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             (actual.error).shouldBeInstanceOf<WalletRepositoryError.WalletError>()
             actual.error.message.shouldNotBeNull()
             actual.error.message.shouldBeEqual("Insufficient Balance")
@@ -232,7 +232,7 @@ class BlinkWalletRepositoryTest {
 
         runBlocking {
             val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
-            actual.shouldBeInstanceOf<Resource.Error>()
+            actual.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             (actual.error).shouldBeInstanceOf<WalletRepositoryError.UnexpectedError>()
         }
     }
@@ -254,7 +254,7 @@ class BlinkWalletRepositoryTest {
         apolloClient.enqueueTestResponse(testSuccessFeeQuery, testSuccessFeeDataNoAmount)
         runBlocking {
             val actual = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS)
-            actual.shouldBeInstanceOf<Resource.Error>()
+            actual.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             (actual.error).shouldBeInstanceOf<WalletRepositoryError.UnexpectedError>()
         }
     }
@@ -273,11 +273,11 @@ class BlinkWalletRepositoryTest {
             apolloMockServer.enqueue(mockedHttpResponse)
 
             val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
-            payResult.shouldBeInstanceOf<Resource.Error>()
+            payResult.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             payResult.error.shouldBeInstanceOf<WalletRepositoryError.AuthenticationError>()
 
             val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE)
-            probeResult.shouldBeInstanceOf<Resource.Error>()
+            probeResult.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             probeResult.error.shouldBeInstanceOf<WalletRepositoryError.AuthenticationError>()
         }
     }
@@ -296,11 +296,11 @@ class BlinkWalletRepositoryTest {
             apolloMockServer.enqueue(mockedHttpResponse)
 
             val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
-            payResult.shouldBeInstanceOf<Resource.Error>()
+            payResult.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             payResult.error.shouldBeInstanceOf<WalletRepositoryError.ServerError>()
 
             val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE)
-            probeResult.shouldBeInstanceOf<Resource.Error>()
+            probeResult.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             probeResult.error.shouldBeInstanceOf<WalletRepositoryError.ServerError>()
         }
     }
@@ -313,11 +313,11 @@ class BlinkWalletRepositoryTest {
             apolloMockServer.close()
 
             val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE)
-            payResult.shouldBeInstanceOf<Resource.Error>()
+            payResult.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             payResult.error.shouldBeInstanceOf<WalletRepositoryError.NetworkError>()
 
             val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE)
-            probeResult.shouldBeInstanceOf<Resource.Error>()
+            probeResult.shouldBeInstanceOf<Resource.Error<WalletRepositoryError>>()
             probeResult.error.shouldBeInstanceOf<WalletRepositoryError.NetworkError>()
         }
     }
