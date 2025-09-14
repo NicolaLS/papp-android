@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.config.AddWalletEntry
 import xyz.lilsus.papp.domain.model.config.WalletEntry

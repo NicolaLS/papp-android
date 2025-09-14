@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
-import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.presentation.main.UiState
 import xyz.lilsus.papp.presentation.mapWalletError

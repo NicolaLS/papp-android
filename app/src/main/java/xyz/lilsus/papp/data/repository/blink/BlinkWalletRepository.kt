@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.lilsus.papp.common.Invoice
-import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
