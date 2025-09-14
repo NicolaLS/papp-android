@@ -101,7 +101,7 @@ class MainViewModel(
                                 // native sensor aspect ratio which is 4:3.
                                 ResolutionStrategy(
                                     Size(1920, 1440),
-                                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER,
+                                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER,
                                 )
                             )
                             .build()
