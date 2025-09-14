@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.QrCodeAnalyzer
-import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
