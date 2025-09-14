@@ -11,25 +11,36 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.di.PappApplication
+import xyz.lilsus.papp.domain.model.Resource
+import xyz.lilsus.papp.domain.repository.SettingsRepository
 import xyz.lilsus.papp.domain.use_case.wallets.config.GetActiveWalletUseCase
 import java.util.Locale
 
 class SettingsViewModel(
     getActiveWallet: GetActiveWalletUseCase,
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as PappApplication)
                 val walletConfigRepository = application.appDependencies.walletConfigRepository
+                val settingsRepository = application.appDependencies.settingsRepository
                 SettingsViewModel(
                     GetActiveWalletUseCase(walletConfigRepository),
+                    settingsRepository
                 )
             }
         }
     }
+
+    val activeCurrency: StateFlow<String> = settingsRepository.currency
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            "SAT"
+        )
 
     /**
      * Gets the active language tag directly from the AppCompatDelegate.
@@ -42,16 +53,14 @@ class SettingsViewModel(
                 ?: Locale.getDefault().toLanguageTag()
 
             val primaryLanguage = currentLocaleTag.split("-").first()
-
             return primaryLanguage
         }
 
     val activeWalletSubtitle: StateFlow<String?> = getActiveWallet()
         .map { resource ->
             when (resource) {
-                is Resource.Loading -> null
                 is Resource.Success -> resource.data?.alias ?: "No active wallet"
-                is Resource.Error -> null
+                else -> null
             }
         }
         .stateIn(
