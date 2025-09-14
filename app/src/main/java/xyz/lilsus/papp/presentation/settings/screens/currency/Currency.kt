@@ -1,27 +1,34 @@
 package xyz.lilsus.papp.presentation.settings.screens.currency
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import xyz.lilsus.papp.R
-import xyz.lilsus.papp.presentation.settings.components.Bar
+import xyz.lilsus.papp.presentation.settings.components.SearchableSettingList
 
 @Composable
-fun Currency(modifier: Modifier = Modifier, onBack: () -> Unit) {
-    Scaffold(topBar = { Bar(stringResource(R.string.currency), onBack) }) { innerPadding ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Text("TBD.", modifier.align(Alignment.Center))
-        }
+fun Currency(
+    modifier: Modifier = Modifier,
+    viewModel: CurrencyViewModel,
+    onBack: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
     }
+
+    SearchableSettingList(
+        title = stringResource(R.string.currency),
+        options = uiState.currencies,
+        selectedTag = uiState.selectedCurrencyTag,
+        onOptionSelected = viewModel::onCurrencySelected,
+        searchQuery = uiState.searchQuery,
+        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onBack = onBack,
+        modifier = modifier
+    )
 }

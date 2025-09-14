@@ -24,6 +24,7 @@ fun SettingsScreen(
 ) {
     val walletSubtitle by viewModel.activeWalletSubtitle.collectAsState()
     val languageTag = viewModel.activeLanguageTag
+    val currency by viewModel.activeCurrency.collectAsState()
 
     val languageSubtitle = when (languageTag) {
         "en" -> "English"
@@ -53,7 +54,7 @@ fun SettingsScreen(
                 onClick = { onNavigate(SettingsDestination.Payments) })
             Setting(
                 title = stringResource(R.string.currency),
-                subtitle = "BTC",
+                subtitle = currency,
                 onClick = { onNavigate(SettingsDestination.Currency) })
             Setting(
                 title = stringResource(R.string.language),
