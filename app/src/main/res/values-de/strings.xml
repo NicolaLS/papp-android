@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tap_continue">Zum Fortfahren tippen…</string>
+    <string name="settings">Einstellungen</string>
+    <string name="loading">Laden…</string>
+    <string name="fee_label">Gebühr</string>
+    <string name="amount_label">Betrag</string>
+    <string name="confirm_payment_title">Zahlung Bestätigen</string>
+    <string name="pay_button">Bezahlen</string>
+    <string name="dismiss_button">Schließen</string>
+    <string name="invoice_already_paid_title">Bereits bezahlt</string>
+    <string name="payment_pending_title">Zahlung ausstehend</string>
+    <string name="point_camera_message_subtitle">Halte die Kamera auf eine Rechnung.</string>
+    <string name="invalid_invoice_title">Ungültige Rechnung</string>
+    <string name="zero_amount_invoice_not_supported_message">Rechnungen ohne Betrag werden noch nicht unterstützt.</string>
+    <string name="not_bolt11_invoice_message">Dies ist keine BOLT11 Lightning Rechnung.</string>
+    <string name="authentication_error_message">Authentifizierung fehlgeschlagen.</string>
+    <string name="network_error_message">Netzwerkfehler. Bitte überprüfe deine Internetverbindung.</string>
+    <string name="no_wallet_connected_message">Keine Wallet verbunden. Verbinde eine Wallet in den Einstellungen.</string>
+    <string name="server_error_message">Serverfehler: %s</string>
+    <string name="unexpected_error_message">Unerwarteter Fehler. Bitte versuche es erneut.</string>
+    <string name="wallet_error_message">Wallet-Fehler: %s</string>
+    <string name="setting_manage_wallets">Wallets Verwalten</string>
+    <string name="setting_payments">Zahlungen</string>
+    <string name="currency">Währung</string>
+    <string name="language">Sprache</string>
+    <string name="wallet_settings_title">Wallet-Einstellungen</string>
+    <string name="remove_wallet_button">Wallet entfernen</string>
+    <string name="add_wallet_button">Wallet hinzufügen</string>
+    <string name="selection_none">Keine</string>
+    <string name="alias_label">Alias</string>
+    <string name="generic_wallet">%s Wallet</string>
+    <string name="select_wallet_type">Wallet-Typ auswählen</string>
+    <string name="cancel_button">Abbrechen</string>
+    <string name="add_generic_wallet">%s Wallet hinzufügen</string>
+    <string name="connect_button">Verbinden</string>
+    <string name="always">Immer</string>
+    <string name="above">Über</string>
+</resources>

@@ -8,11 +8,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.presentation.settings.components.Bar
 
 @Composable
 fun Language(modifier: Modifier = Modifier, onBack: () -> Unit) {
-    Scaffold(topBar = { Bar("Language", onBack) }) { innerPadding ->
+    Scaffold(topBar = { Bar(stringResource(R.string.language), onBack) }) { innerPadding ->
         Box(
             modifier = modifier
                 .fillMaxSize()

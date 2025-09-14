@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.config.AddWalletEntry
 import xyz.lilsus.papp.domain.model.config.WalletConfigEntry
 import xyz.lilsus.papp.domain.model.config.wallets.BlinkConfig
@@ -22,7 +24,7 @@ fun AddBlinkWallet(onDismiss: () -> Unit, onConfirm: (walletEntry: AddWalletEntr
     var walletId by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Blink Wallet") },
+        title = { Text(stringResource(R.string.add_generic_wallet, "Blink")) },
         text = {
             Column {
                 WalletAliasInput(alias = alias, onAliasChange = { alias = it })
@@ -48,12 +50,12 @@ fun AddBlinkWallet(onDismiss: () -> Unit, onConfirm: (walletEntry: AddWalletEntr
                     )
                 )
             }) {
-                Text("Connect")
+                Text(stringResource(R.string.connect_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel_button))
             }
         }
     )

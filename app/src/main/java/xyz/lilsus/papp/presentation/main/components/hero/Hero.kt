@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
+import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.presentation.main.PaymentResult
@@ -169,7 +170,7 @@ private fun HeroPreview() {
         UiState.PaymentDone(PaymentResult.Success(sendPaymentData to WalletTypeEntry.BLINK)),
         UiState.Active,
         UiState.QrDetected(Invoice.Invalid.NotBolt11Invoice),
-        UiState.PaymentDone(PaymentResult.Error("")),
+        UiState.PaymentDone(PaymentResult.Error(WalletRepositoryError.UnexpectedError)),
     )
     var currentState by remember { mutableStateOf<UiState>(UiState.Active) }
     LaunchedEffect(Unit) {

@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletOption
 
 @Composable
@@ -22,7 +24,7 @@ fun WalletSelectionDropdown(
 
     Box {
         TextButton(onClick = { expanded = true }) {
-            Text(labelForSelection(selected))
+            Text(labelForSelection(selected, stringResource(R.string.selection_none)))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
@@ -31,14 +33,21 @@ fun WalletSelectionDropdown(
                         onSelected(option)
                         expanded = false
                     },
-                    text = { Text(labelForSelection(option)) }
+                    text = {
+                        Text(
+                            labelForSelection(
+                                option,
+                                stringResource(R.string.selection_none)
+                            )
+                        )
+                    }
                 )
             }
         }
     }
 }
 
-fun labelForSelection(option: WalletOption): String = when (option) {
-    WalletOption.None -> "None"
+fun labelForSelection(option: WalletOption, noneLabel: String): String = when (option) {
+    WalletOption.None -> noneLabel
     is WalletOption.Wallet -> "${option.entry.alias} (${option.entry.key.take(4)})"
 }

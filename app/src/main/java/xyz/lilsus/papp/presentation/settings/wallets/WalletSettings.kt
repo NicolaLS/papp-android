@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletOption
 import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletsViewModel
@@ -28,12 +30,18 @@ fun WalletSettings(
     val selected by viewModel.selectedWallet.collectAsState()
 
 
-    Text("Wallet Settings", style = MaterialTheme.typography.headlineSmall)
+    Text(
+        stringResource(R.string.wallet_settings_title),
+        style = MaterialTheme.typography.headlineSmall
+    )
     Spacer(Modifier.height(16.dp))
 
     when (val result = allWallets) {
         is Resource.Loading -> CircularProgressIndicator()
-        is Resource.Error -> Text("Error loading wallets")
+        is Resource.Error -> {
+            /* never returns error */
+        }
+
         is Resource.Success -> {
             val wallets = result.data
 
@@ -52,11 +60,11 @@ fun WalletSettings(
                     onClick = viewModel::onRemoveSelected,
                     enabled = selected is WalletOption.Wallet
                 ) {
-                    Text("Remove")
+                    Text(stringResource(R.string.remove_wallet_button))
                 }
 
                 Button(onClick = viewModel::onAddWalletClicked) {
-                    Text("Add Wallet")
+                    Text(stringResource(R.string.add_wallet_button))
                 }
             }
         }
