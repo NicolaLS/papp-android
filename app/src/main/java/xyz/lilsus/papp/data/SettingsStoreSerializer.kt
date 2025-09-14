@@ -6,8 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
-import xyz.lilsus.papp.common.DEFAULT_ALWAYS_CONFIRM_PAYMENT
-import xyz.lilsus.papp.common.DEFAULT_CONFIRM_ABOVE
+import xyz.lilsus.papp.common.Constants
 import xyz.lilsus.papp.proto.settings.Payments
 import xyz.lilsus.papp.proto.settings.SettingsStore
 import java.io.InputStream
@@ -18,8 +17,8 @@ object SettingsStoreSerializer : Serializer<SettingsStore> {
     override val defaultValue: SettingsStore = SettingsStore.newBuilder()
         .setPaymentSettings(
             Payments.newBuilder()
-                .setAlwaysConfirmPayment(DEFAULT_ALWAYS_CONFIRM_PAYMENT)
-                .setConfirmPaymentAbove(DEFAULT_CONFIRM_ABOVE)
+                .setAlwaysConfirmPayment(Constants.DEFAULT_ALWAYS_CONFIRM_PAYMENT)
+                .setConfirmPaymentAbove(Constants.DEFAULT_CONFIRM_ABOVE)
         )
         .build()
 
