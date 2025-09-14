@@ -20,7 +20,7 @@ class PayInvoiceUseCase(private val repositoryFlow: StateFlow<WalletRepository?>
                 emit(Resource.Error(WalletRepositoryError.NoWalletConnected))
                 return@flow
             }
-            val result = repository.payBolt11Invoice(invoice.bolt11)
+            val result = repository.payBolt11Invoice(invoice)
                 .map { it to repository.walletType }
             emit(result)
         }

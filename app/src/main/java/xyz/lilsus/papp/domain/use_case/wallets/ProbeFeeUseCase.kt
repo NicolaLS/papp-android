@@ -17,7 +17,7 @@ class ProbeFeeUseCase(
         val repository = repositoryFlow.value
             ?: return Resource.Error(WalletRepositoryError.NoWalletConnected)
 
-        val result = repository.probeBolt11PaymentFee(invoice.bolt11)
+        val result = repository.probeBolt11PaymentFee(invoice)
             .map { it to repository.walletType }
         return result
     }
