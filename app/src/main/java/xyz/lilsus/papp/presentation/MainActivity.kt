@@ -19,6 +19,7 @@ import xyz.lilsus.papp.presentation.main.components.WithCameraPermission
 import xyz.lilsus.papp.presentation.settings.SettingsScreen
 import xyz.lilsus.papp.presentation.settings.SettingsViewModel
 import xyz.lilsus.papp.presentation.settings.screens.currency.Currency
+import xyz.lilsus.papp.presentation.settings.screens.currency.CurrencyViewModel
 import xyz.lilsus.papp.presentation.settings.screens.language.Language
 import xyz.lilsus.papp.presentation.settings.screens.language.LanguageViewModel
 import xyz.lilsus.papp.presentation.settings.screens.payments.Payments
@@ -114,7 +115,13 @@ fun App() {
                 )
             }
             composable<SettingsDestination.Currency> { backStackEntry ->
-                Currency(onBack = { navController.popBackStack() })
+                Currency(
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel(
+                        viewModelStoreOwner = backStackEntry,
+                        factory = CurrencyViewModel.Factory
+                    )
+                )
             }
             composable<SettingsDestination.Language> { backStackEntry ->
                 Language(

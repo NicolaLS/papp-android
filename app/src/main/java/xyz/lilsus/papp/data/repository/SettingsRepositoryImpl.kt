@@ -33,5 +33,11 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override val currency = dataStore.data.map { it.currency }
 
+    override suspend fun setCurrency(currency: String) {
+        dataStore.updateData { current ->
+            current.toBuilder().setCurrency(currency).build()
+        }
+    }
 }
