@@ -3,7 +3,7 @@ package xyz.lilsus.papp.presentation.settings.screens.payments.components
 import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import xyz.lilsus.papp.common.DEFAULT_MAX_ABOVE
+import xyz.lilsus.papp.common.Constants
 
 @Composable
 fun ConfirmPaymentsAboveSlider(
@@ -19,7 +19,7 @@ fun ConfirmPaymentsAboveSlider(
             value = value,
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,
-            valueRange = 0f..DEFAULT_MAX_ABOVE
+            valueRange = 0f..Constants.DEFAULT_MAX_ABOVE
         )
     }
 }
