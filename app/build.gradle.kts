@@ -94,6 +94,9 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.slf4j.simple)
     testImplementation(libs.kotest.assertions.core)
+    // TODO: maybe remove this again.
+    testImplementation(libs.apollo.mockserver)
+    testImplementation(libs.apollo.testing.support)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

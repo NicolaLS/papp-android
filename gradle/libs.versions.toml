@@ -1,6 +1,8 @@
 [versions]
 agp = "8.13.0"
 apollo = "4.3.3"
+apolloMockserver = "0.2.0"
+apolloTestingSupport = "4.3.3"
 arrowCoreJvm = "1.2.0"
 barcodeScanning = "17.3.0"
 cameraMlkitVision = "1.4.2"
@@ -28,6 +30,7 @@ slf4jSimple = "2.0.9"
 
 [libraries]
 # GraphQl
+apollo-mockserver = { module = "com.apollographql.mockserver:apollo-mockserver", version.ref = "apolloMockserver" }
 apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
 androidx-camera-compose = { module = "androidx.camera:camera-compose", version.ref = "camerax" }
@@ -39,6 +42,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+apollo-testing-support = { module = "com.apollographql.apollo:apollo-testing-support", version.ref = "apolloTestingSupport" }
 arrow-core-jvm = { module = "io.arrow-kt:arrow-core-jvm", version.ref = "arrowCoreJvm" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

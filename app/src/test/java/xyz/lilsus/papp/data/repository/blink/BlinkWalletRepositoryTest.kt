@@ -1,199 +1,323 @@
 package xyz.lilsus.papp.data.repository.blink
 
-import io.kotest.matchers.result.shouldBeFailure
-import io.kotest.matchers.result.shouldBeSuccess
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
+import android.util.Log
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.annotations.ApolloExperimental
+import com.apollographql.apollo.testing.QueueTestNetworkTransport
+import com.apollographql.apollo.testing.enqueueTestResponse
+import com.apollographql.mockserver.MockResponse
+import com.apollographql.mockserver.MockServer
+import io.kotest.matchers.equals.shouldBeEqual
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonObject
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import xyz.lilsus.papp.common.Bolt11Invoice
-import xyz.lilsus.papp.data.repository.blink.graphql.GraphQLError
-import xyz.lilsus.papp.data.repository.blink.graphql.Mutations
-import xyz.lilsus.papp.data.repository.blink.graphql.OkHttpGraphQLHttpClient
+import xyz.lilsus.papp.common.Invoice
+import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
-import java.io.IOException
+import xyz.lilsus.papp.graphql.LnInvoiceFeeProbeMutation
+import xyz.lilsus.papp.graphql.LnInvoicePaymentSendMutation
+import xyz.lilsus.papp.graphql.type.LnInvoiceFeeProbeInput
+import xyz.lilsus.papp.graphql.type.LnInvoicePaymentInput
+import xyz.lilsus.papp.graphql.type.PaymentSendResult
 
+@OptIn(ApolloExperimental::class)
 class BlinkWalletRepositoryTest {
-    lateinit var mockGraphQLClient: OkHttpGraphQLHttpClient
-    lateinit var blinkWalletRepository: BlinkWalletRepository
-
     companion object {
-        private val BOLT11 =
-            Bolt11Invoice.parseOrNull("lnbc93440n1p59msy5pp56ft8ayhe7jut3yk2keejpfu66qppkxkwy2nk82ywtlasuxpmen9sdqqcqzzsxqyz5vqsp5eyqt9rq8mv4r3dvzdv007dqmlsvl6fdv2f07yrh74lj7lzg6deqs9qxpqysgqxuf89ejpguvkx5vum5k72j73dfp5gmna93v34qjgd9lsvthfwjqx8qmzt8j8dfscdfxel3ahz8dcksfw4yuwpejmksus5fd2dde7c5cqy9jfc3")!!
-        private const val WALLET_ID = "420-69"
+        private const val TEST_WALLET_ID = "test-wallet-id"
+        private val TEST_INVOICE_SUCCESS =
+            Invoice.parse("lnbc93440n1p59msy5pp56ft8ayhe7jut3yk2keejpfu66qppkxkwy2nk82ywtlasuxpmen9sdqqcqzzsxqyz5vqsp5eyqt9rq8mv4r3dvzdv007dqmlsvl6fdv2f07yrh74lj7lzg6deqs9qxpqysgqxuf89ejpguvkx5vum5k72j73dfp5gmna93v34qjgd9lsvthfwjqx8qmzt8j8dfscdfxel3ahz8dcksfw4yuwpejmksus5fd2dde7c5cqy9jfc3") as Invoice.Bolt11
+        private val TEST_INVOICE_FAILURE =
+            Invoice.parse("lnbc93440n1p59ms9vpp5rnhv4sacupnx0a600qvvzctu9fxkcaj8qzx9wykjwcmjdalur30sdqqcqzzsxqyz5vqsp5xm5rh3v7a24dmhjs57rpqr8qvvywswahkm0kc8s7dqaadg85awvq9qxpqysgqhejddw05xhsyln0d86lyxhkdnd6cmlse3c30cehlm4af2gucm2snwglffvmt0ngstd9kt973sn4cg4uldkz6pgc43cqxy8jgufhvmfgpgvgfda") as Invoice.Bolt11
+        private val TEST_INVOICE_ALREADY_PAID =
+            Invoice.parse("lnbc93440n1p59ms9upp5d088k9ezuj5rsgx9smj99nq8uj6x6d4h5fapyajhjtt2nc70hz6qdqqcqzzsxqyz5vqsp5vgh965nz33qzjyqt0m92nfntk936lvs9a0dndxjyfkk5m8f4sp3q9qxpqysgqnm5vsrc8k202n2euh45eywte3z5t44zxyx887pf34vrax6sr7duql6aw23znrwxnkudhje7dcpfquda9vekl52edu4zdlmvln5m3qegpkmfjvx") as Invoice.Bolt11
+        private val TEST_INVOICE_PENDING =
+            Invoice.parse("lnbc93390n1p59msxvpp542spezgwnc0h3unc7qyn9vgfvpx3ugl6gldla8f8zgptptucte0sdqqcqzzsxqyz5vqsp5ve8ymecn3n74k9n2e58rn22rwmnxwrkq5vcr8znf7dt2zlen4dhs9qxpqysgql6qlhwtvvyhsuu27w3wxt67lfewt2khxwkeyyfkqkcr6r65jrytrm395v7r66337cdssexzutpe2qml9wpd59hjvy0vhd9u7tqpkltgpp3a68m") as Invoice.Bolt11
+    }
+
+    private lateinit var apolloClient: ApolloClient
+    private lateinit var mockServerApolloClient: ApolloClient
+    private lateinit var repository: BlinkWalletRepository
+    private lateinit var apolloMockServer: MockServer
+
+    private fun useMockServer() {
+        repository = BlinkWalletRepository(TEST_WALLET_ID, mockServerApolloClient)
     }
 
     @Before
-    fun setup() {
-        mockGraphQLClient = mockk<OkHttpGraphQLHttpClient>()
-        blinkWalletRepository = BlinkWalletRepository(WALLET_ID, mockGraphQLClient)
+    fun setUp() {
+        apolloMockServer = MockServer()
+        // The apollo client for GraphQL-level mocking
+        apolloClient = ApolloClient.Builder()
+            .networkTransport(QueueTestNetworkTransport())
+            .build()
+        // The apollo client for network-level mocking
+        runBlocking {
+            mockServerApolloClient = ApolloClient.Builder()
+                .serverUrl(apolloMockServer.url())
+                .build()
+        }
+
+        // Default to the queueing client for existing tests
+        repository = BlinkWalletRepository(TEST_WALLET_ID, apolloClient)
+
+        // FIXME: Don't depend on Log in data layer
+        mockkStatic(Log::class)
+        every { Log.d(any(), any()) } returns 0
+        every { Log.e(any(), any<String>()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Log::class)
+        apolloMockServer.close()
     }
 
     @Test
-    fun `payBolt11Invoice calls post on API client with correct query and variables`() {
-        coEvery {
-            mockGraphQLClient.post(
-                Mutations.LnInvoicePaymentSend,
-                ofType<JsonObject>(),
+    fun `payBolt11Invoice & probeBolt11PaymentFee - LnInvoicePaymentSendMutation SUCCESS status response - returns correct data`() {
+        val testSuccessPayQuery = LnInvoicePaymentSendMutation(
+            LnInvoicePaymentInput(
+                paymentRequest = TEST_INVOICE_SUCCESS.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
             )
-        } returns Result.failure(Exception())
+        )
+        val testSuccessFeeQuery = LnInvoiceFeeProbeMutation(
+            LnInvoiceFeeProbeInput(
+                paymentRequest = TEST_INVOICE_SUCCESS.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
+            )
+        )
+        val testSuccessPayData = LnInvoicePaymentSendMutation.Data(
+            LnInvoicePaymentSendMutation.LnInvoicePaymentSend(
+                errors = emptyList(),
+                status = PaymentSendResult.SUCCESS,
+                transaction = LnInvoicePaymentSendMutation.Transaction(
+                    settlementAmount = 21_000L,
+                    settlementFee = 21,
+                )
+            )
+        )
+        val testSuccessFeeData = LnInvoiceFeeProbeMutation.Data(
+            LnInvoiceFeeProbeMutation.LnInvoiceFeeProbe(
+                errors = emptyList(),
+                amount = 21L
+            )
+        )
+
+        apolloClient.enqueueTestResponse(testSuccessPayQuery, testSuccessPayData)
+        apolloClient.enqueueTestResponse(testSuccessFeeQuery, testSuccessFeeData)
 
         runBlocking {
-            blinkWalletRepository.payBolt11Invoice(BOLT11)
-        }
-
-        coVerify(exactly = 1) {
-            mockGraphQLClient.post(Mutations.LnInvoicePaymentSend, buildJsonObject {
-                putJsonObject("input") {
-                    put("paymentRequest", BOLT11.encodedSafe)
-                    put("walletId", WALLET_ID)
-                }
-            })
+            val actualPay = repository.payBolt11Invoice(TEST_INVOICE_SUCCESS.bolt11)
+            val actualFee = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS.bolt11)
+            actualPay.shouldBeInstanceOf<Resource.Success<*>>()
+            actualFee.shouldBeInstanceOf<Resource.Success<*>>()
+            (actualPay.data).shouldBeInstanceOf<SendPaymentData.Success>()
+            (actualFee.data).shouldBeInstanceOf<Long>()
+            // Amount Paid is settlementAmount - settlementFee.
+            actualPay.data.amountPaid.shouldBeEqual(21_000L - 21L)
+            actualPay.data.feePaid.shouldBeEqual(21L)
+            actualFee.data.shouldBeEqual(21L)
         }
     }
 
     @Test
-    fun `payBolt11Invoice handles GraphQL client EmptyBody error`() {
-        coEvery {
-            mockGraphQLClient.post(
-                any(),
-                any()
+    fun `payBolt11Invoice - LnInvoicePaymentSendMutation ALREADY_PAID status response - returns correct data`() {
+        val testAlreadyPaidQuery = LnInvoicePaymentSendMutation(
+            LnInvoicePaymentInput(
+                paymentRequest = TEST_INVOICE_ALREADY_PAID.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
             )
-        } returns Result.failure(GraphQLError.EmptyBody)
+        )
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletRepositoryError.Client>()
-        res.exceptionOrNull()!!.cause.shouldBe(GraphQLError.EmptyBody)
-    }
-
-    @Test
-    fun `payBolt11Invoice handles GraphQL client HttpError error`() {
-        coEvery {
-            mockGraphQLClient.post(
-                any(),
-                any()
+        val testAlreadyPaidDataNoTransaction = LnInvoicePaymentSendMutation.Data(
+            LnInvoicePaymentSendMutation.LnInvoicePaymentSend(
+                errors = emptyList(),
+                status = PaymentSendResult.ALREADY_PAID,
+                transaction = null
             )
-        } returns Result.failure(GraphQLError.HttpError(500, "Internal Server Error"))
+        )
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletRepositoryError.Client>()
-        res.exceptionOrNull()!!.cause.shouldBe(GraphQLError.HttpError(500, "Internal Server Error"))
+        val testAlreadyPaidData = testAlreadyPaidDataNoTransaction.copy(
+            testAlreadyPaidDataNoTransaction.lnInvoicePaymentSend.copy(transaction = null)
+        )
+
+        apolloClient.enqueueTestResponse(testAlreadyPaidQuery, testAlreadyPaidData)
+        apolloClient.enqueueTestResponse(testAlreadyPaidQuery, testAlreadyPaidDataNoTransaction)
+
+        runBlocking {
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_ALREADY_PAID.bolt11)
+            actual.shouldBeInstanceOf<Resource.Success<*>>()
+            (actual.data).shouldBeInstanceOf<SendPaymentData.AlreadyPaid>()
+        }
     }
 
     @Test
-    fun `payBolt11Invoice handles GraphQL client NetworkError error`() {
-        coEvery {
-            mockGraphQLClient.post(
-                any(),
-                any()
+    fun `payBolt11Invoice - LnInvoicePaymentSendMutation PENDING status response - returns correct data`() {
+        val testPendingQuery = LnInvoicePaymentSendMutation(
+            LnInvoicePaymentInput(
+                paymentRequest = TEST_INVOICE_PENDING.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
             )
-        } returns Result.failure(GraphQLError.NetworkError(IOException("Timeout")))
+        )
+        val testPendingData =
+            LnInvoicePaymentSendMutation.Data(
+                LnInvoicePaymentSendMutation.LnInvoicePaymentSend(
+                    errors = emptyList(),
+                    status = PaymentSendResult.PENDING,
+                    transaction = null
+                )
+            )
+        apolloClient.enqueueTestResponse(testPendingQuery, testPendingData)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletRepositoryError.Client>()
-        val cause = res.exceptionOrNull()!!.cause
-        cause.shouldBeInstanceOf<GraphQLError.NetworkError>()
-        cause.cause.shouldBeInstanceOf<IOException>()
-        cause.cause.message.shouldBe("Timeout")
-    }
-
-    @Test
-    fun `payBolt11Invoice handles invalid-JSON string from GraphQL client`() {
-        coEvery { mockGraphQLClient.post(any(), any()) } returns Result.success("not even JSON")
-
-        val res = runBlocking {
-            blinkWalletRepository.payBolt11Invoice(BOLT11)
+        runBlocking {
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_PENDING.bolt11)
+            actual.shouldBeInstanceOf<Resource.Success<*>>()
+            (actual.data).shouldBeInstanceOf<SendPaymentData.Pending>()
         }
-        res.shouldBeFailure()
-        res.exceptionOrNull().shouldBeInstanceOf<WalletRepositoryError.Deserialization>()
     }
 
     @Test
-    fun `payBolt11Invoice handles API response with missing status`() {
-        val jsonResponseStub =
-            """{"data":{"lnInvoicePaymentSend":{"errors":[],"status":null,"transaction":null}}}"""
-        coEvery { mockGraphQLClient.post(any(), any()) } returns Result.success(jsonResponseStub)
+    fun `payBolt11Invoice - LnInvoicePaymentSendMutation FAILURE status response - returns correct error`() {
+        val testFailureQuery = LnInvoicePaymentSendMutation(
+            LnInvoicePaymentInput(
+                paymentRequest = TEST_INVOICE_FAILURE.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
+            )
+        )
+        val testFailureData =
+            LnInvoicePaymentSendMutation.Data(
+                LnInvoicePaymentSendMutation.LnInvoicePaymentSend(
+                    errors = listOf(LnInvoicePaymentSendMutation.Error("Insufficient Balance")),
+                    status = PaymentSendResult.FAILURE,
+                    transaction = null
+                )
+            )
+        apolloClient.enqueueTestResponse(testFailureQuery, testFailureData)
 
-        val res = runBlocking {
-            blinkWalletRepository.payBolt11Invoice(BOLT11)
+        runBlocking {
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            actual.shouldBeInstanceOf<Resource.Error>()
+            (actual.error).shouldBeInstanceOf<WalletRepositoryError.WalletError>()
+            actual.error.message.shouldNotBeNull()
+            actual.error.message.shouldBeEqual("Insufficient Balance")
         }
-        res.shouldBeFailure()
-        res.exceptionOrNull().shouldBeInstanceOf<WalletRepositoryError.MissingStatus>()
     }
 
     @Test
-    fun `payBolt11Invoice handles API SUCCESS response with missing transaction`() {
-        val jsonResponseStub =
-            """{"data":{"lnInvoicePaymentSend":{"errors":[],"status":"SUCCESS","transaction":null}}}"""
-        coEvery { mockGraphQLClient.post(any(), any()) } returns Result.success(jsonResponseStub)
+    fun `payBolt11Invoice - LnInvoicePaymentSendMutation UNKNOWN__ status response - returns correct error`() {
+        val testUnknownQuery = LnInvoicePaymentSendMutation(
+            LnInvoicePaymentInput(
+                paymentRequest = TEST_INVOICE_FAILURE.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
+            )
+        )
+        val testUnknownData =
+            LnInvoicePaymentSendMutation.Data(
+                LnInvoicePaymentSendMutation.LnInvoicePaymentSend(
+                    errors = emptyList(),
+                    status = PaymentSendResult.UNKNOWN__,
+                    transaction = null
+                )
+            )
+        apolloClient.enqueueTestResponse(testUnknownQuery, testUnknownData)
 
-        val res = runBlocking {
-            blinkWalletRepository.payBolt11Invoice(BOLT11)
+        runBlocking {
+            val actual = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            actual.shouldBeInstanceOf<Resource.Error>()
+            (actual.error).shouldBeInstanceOf<WalletRepositoryError.UnexpectedError>()
         }
-        res.shouldBeFailure()
-        res.exceptionOrNull().shouldBeInstanceOf<WalletRepositoryError.MissingTransaction>()
     }
 
     @Test
-    fun `payBolt11Invoice handles valid API SUCCESS response`() {
-        val jsonResponseStub =
-            """{"data":{"lnInvoicePaymentSend":{"errors":[],"status":"SUCCESS","transaction":{"createdAt":1751313456,"direction":"SEND","id":"6862ec305a85d4a021268c05","memo":null,"settlementAmount":-20,"settlementCurrency":"BTC","settlementDisplayAmount":"-0.02","settlementDisplayCurrency":"USD","settlementDisplayFee":"0.01","settlementFee":10,"status":"SUCCESS"}}}}"""
-        coEvery {
-            mockGraphQLClient.post(any(), any())
-        } returns Result.success(jsonResponseStub)
-
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeSuccess()
-        res.getOrNull().shouldBe(SendPaymentData.Success(10, 10, null))
+    fun `probeBolt11InvoiceFee - missing amount in response - returns UnexpectedError`() {
+        val testSuccessFeeQuery = LnInvoiceFeeProbeMutation(
+            LnInvoiceFeeProbeInput(
+                paymentRequest = TEST_INVOICE_SUCCESS.bolt11.encodedSafe,
+                walletId = TEST_WALLET_ID
+            )
+        )
+        val testSuccessFeeDataNoAmount = LnInvoiceFeeProbeMutation.Data(
+            LnInvoiceFeeProbeMutation.LnInvoiceFeeProbe(
+                errors = emptyList(),
+                amount = null
+            )
+        )
+        apolloClient.enqueueTestResponse(testSuccessFeeQuery, testSuccessFeeDataNoAmount)
+        runBlocking {
+            val actual = repository.probeBolt11PaymentFee(TEST_INVOICE_SUCCESS.bolt11)
+            actual.shouldBeInstanceOf<Resource.Error>()
+            (actual.error).shouldBeInstanceOf<WalletRepositoryError.UnexpectedError>()
+        }
     }
 
     @Test
-    fun `payBolt11Invoice handles API ALREADY_PAID response`() {
-        val jsonResponseStub =
-            """{"data":{"lnInvoicePaymentSend":{"errors":[],"status":"ALREADY_PAID","transaction":null}}}"""
-        coEvery {
-            mockGraphQLClient.post(any(), any())
-        } returns Result.success(jsonResponseStub)
+    fun `payBolt11Invoice & probeBolt11InvoiceFee - Http 401 response - returns AuthenticationError`() {
+        useMockServer()
+        runBlocking {
+            // Enqueue two responses, one for each method call
+            val mockedHttpResponse = MockResponse.Builder()
+                .statusCode(401)
+                .body("Unauthorized")
+                .delayMillis(500L)
+                .build()
+            apolloMockServer.enqueue(mockedHttpResponse)
+            apolloMockServer.enqueue(mockedHttpResponse)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeSuccess()
-        res.getOrNull().shouldBe(SendPaymentData.AlreadyPaid)
+            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            payResult.shouldBeInstanceOf<Resource.Error>()
+            payResult.error.shouldBeInstanceOf<WalletRepositoryError.AuthenticationError>()
+
+            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE.bolt11)
+            probeResult.shouldBeInstanceOf<Resource.Error>()
+            probeResult.error.shouldBeInstanceOf<WalletRepositoryError.AuthenticationError>()
+        }
     }
 
     @Test
-    fun `payBolt11Invoice handles API PENDING response`() {
-        val jsonResponseStub =
-            """{"data":{"lnInvoicePaymentSend":{"errors":[],"status":"PENDING","transaction":null}}}"""
-        coEvery {
-            mockGraphQLClient.post(any(), any())
-        } returns Result.success(jsonResponseStub)
+    fun `payBolt11Invoice & probeBolt11InvoiceFee - Http 500 response - returns ServerError`() {
+        useMockServer()
+        runBlocking {
+            // Enqueue two responses, one for each method call
+            val mockedHttpResponse = MockResponse.Builder()
+                .statusCode(500)
+                .body("Internal server error")
+                .delayMillis(1000L)
+                .build()
+            apolloMockServer.enqueue(mockedHttpResponse)
+            apolloMockServer.enqueue(mockedHttpResponse)
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeSuccess()
-        res.getOrNull().shouldBe(SendPaymentData.Pending)
+            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            payResult.shouldBeInstanceOf<Resource.Error>()
+            payResult.error.shouldBeInstanceOf<WalletRepositoryError.ServerError>()
+
+            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE.bolt11)
+            probeResult.shouldBeInstanceOf<Resource.Error>()
+            probeResult.error.shouldBeInstanceOf<WalletRepositoryError.ServerError>()
+        }
     }
 
     @Test
-    fun `payBolt11Invoice handles API FAILURE response`() {
-        val jsonResponseStub =
-            """{"data":{"lnInvoicePaymentSend":{"errors":[{"code":"123","message":"Some error","path":[]}],"status":"FAILURE","transaction":null}}}"""
-        coEvery {
-            mockGraphQLClient.post(any(), any())
-        } returns Result.success(jsonResponseStub)
+    fun `payBolt11Invoice & probeBolt11InvoiceFee - Apollo Network Exception - returns NetworkError`() {
+        useMockServer()
+        runBlocking {
+            // Shutting down the server will cause a network exception
+            apolloMockServer.close()
 
-        val res = runBlocking { blinkWalletRepository.payBolt11Invoice(BOLT11) }
-        res.shouldBeFailure<WalletRepositoryError.ApiError>()
-        res.exceptionOrNull()!!.message.shouldContain("Error sending payment:")
-        res.exceptionOrNull()!!.message.shouldContain("Some error")
+            val payResult = repository.payBolt11Invoice(TEST_INVOICE_FAILURE.bolt11)
+            payResult.shouldBeInstanceOf<Resource.Error>()
+            payResult.error.shouldBeInstanceOf<WalletRepositoryError.NetworkError>()
+
+            val probeResult = repository.probeBolt11PaymentFee(TEST_INVOICE_FAILURE.bolt11)
+            probeResult.shouldBeInstanceOf<Resource.Error>()
+            probeResult.error.shouldBeInstanceOf<WalletRepositoryError.NetworkError>()
+        }
     }
 }
