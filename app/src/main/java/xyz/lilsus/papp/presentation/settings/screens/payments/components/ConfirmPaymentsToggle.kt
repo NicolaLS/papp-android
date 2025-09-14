@@ -8,6 +8,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import xyz.lilsus.papp.R
 
 @Composable
 fun ConfirmPaymentsToggle(
@@ -25,12 +27,12 @@ fun ConfirmPaymentsToggle(
         TextButton(
             onClick = { onClick(true) },
             colors = ButtonDefaults.textButtonColors(contentColor = alwaysConfirmColor)
-        ) { Text("Always") }
+        ) { Text(stringResource(R.string.always)) }
 
         TextButton(
             onClick = { onClick(false) },
             colors = ButtonDefaults.textButtonColors(contentColor = confirmAboveColor)
-        ) { Text("Above") }
+        ) { Text(stringResource(R.string.above)) }
     }
 
 }

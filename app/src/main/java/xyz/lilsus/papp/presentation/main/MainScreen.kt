@@ -22,8 +22,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.presentation.ext.tapToDismiss
 import xyz.lilsus.papp.presentation.main.components.BottomLayout
 import xyz.lilsus.papp.presentation.main.components.BottomSheetOverlay
@@ -89,7 +91,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
                             currentPaymentResult?.let { PaymentResultScreen(currentPaymentResult) }
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Tap to continue...",
+                                text = stringResource(R.string.tap_continue),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -98,17 +100,18 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
 
                     false -> {
                         BottomLayout(
-                            title = "Payment App",
-                            subtitle = "Point the camera at an invoice."
+                            title = stringResource(R.string.app_name_long),
+                            subtitle = stringResource(R.string.point_camera_message_subtitle)
                         )
                     }
                 }
             }
         }
+        // TODO: i18n meta strings e.g contentDescription here.
         ExtendedFloatingActionButton(
             onClick = onSettingsClick,
             icon = { Icon(Icons.Filled.Settings, "Extended floating action button.") },
-            text = { Text(text = "Settings") },
+            text = { Text(text = stringResource(R.string.settings)) },
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(16.dp),

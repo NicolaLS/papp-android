@@ -15,8 +15,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.common.Invoice
 
 @Composable
@@ -36,8 +38,8 @@ fun QrDetectedBottomSheet(
     }
 
     val message = when (invalidInvoice) {
-        Invoice.Invalid.NoAmountBolt11 -> "Invoices without amount are not supported yet."
-        Invoice.Invalid.NotBolt11Invoice -> "This is not a BOLT11 Lightning Invoice."
+        Invoice.Invalid.NoAmountBolt11 -> stringResource(R.string.zero_amount_invoice_not_supported_message)
+        Invoice.Invalid.NotBolt11Invoice -> stringResource(R.string.not_bolt11_invoice_message)
     }
 
     ModalBottomSheet(
@@ -51,7 +53,7 @@ fun QrDetectedBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Invalid Invoice",
+                text = stringResource(R.string.invalid_invoice_title),
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center
             )
@@ -74,7 +76,7 @@ fun QrDetectedBottomSheet(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.dismiss_button))
                 }
             }
         }

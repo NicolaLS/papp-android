@@ -8,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.config.AddWalletEntry
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.presentation.settings.wallets.components.wallets.AddBlinkWallet
@@ -17,7 +19,7 @@ fun AddWalletModal(onDismiss: () -> Unit, onConfirm: (AddWalletEntry) -> Unit) {
     var selectedWalletType by remember { mutableStateOf<WalletTypeEntry>(WalletTypeEntry.NOT_SET) }
     AlertDialog(
         onDismissRequest = { onDismiss },
-        title = { Text("Select Wallet Type") },
+        title = { Text(stringResource(R.string.select_wallet_type)) },
         text = {
             when (selectedWalletType) {
                 WalletTypeEntry.NOT_SET -> AddWalletSelection(onClick = { walletType ->
@@ -30,7 +32,7 @@ fun AddWalletModal(onDismiss: () -> Unit, onConfirm: (AddWalletEntry) -> Unit) {
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel_button))
             }
         }
     )

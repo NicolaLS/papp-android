@@ -32,13 +32,13 @@ import xyz.lilsus.papp.common.QrCodeAnalyzer
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.SendPaymentData
+import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ProbeFeeUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
-import xyz.lilsus.papp.presentation.handleErrorMessage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 sealed class PaymentResult {
     data class Success(val data: Pair<SendPaymentData, WalletTypeEntry>) : PaymentResult()
-    data class Error(val message: String?) : PaymentResult()
+    data class Error(val error: WalletRepositoryError) : PaymentResult()
 }
 
 
@@ -238,7 +238,7 @@ class MainViewModel(
                 Resource.Loading -> UiState.PerformingPayment
                 is Resource.Error -> {
                     vibrate()
-                    UiState.PaymentDone(PaymentResult.Error(handleErrorMessage(it.error)))
+                    UiState.PaymentDone(PaymentResult.Error(it.error))
                 }
 
                 is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> {

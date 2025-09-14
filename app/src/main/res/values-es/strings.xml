@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tap_continue">Toca para continuar…</string>
+    <string name="settings">Ajustes</string>
+    <string name="loading">Cargando…</string>
+    <string name="fee_label">Comisión</string>
+    <string name="amount_label">Cantidad</string>
+    <string name="confirm_payment_title">Confirmar pago</string>
+    <string name="pay_button">Pagar</string>
+    <string name="dismiss_button">Cerrar</string>
+    <string name="invoice_already_paid_title">Ya pagado</string>
+    <string name="payment_pending_title">Pago pendiente</string>
+    <string name="point_camera_message_subtitle">Apunta la cámara a una factura.</string>
+    <string name="invalid_invoice_title">Factura inválida</string>
+    <string name="zero_amount_invoice_not_supported_message">Las facturas sin cantidad aún no se pueden usar.</string>
+    <string name="not_bolt11_invoice_message">Esto no es una factura Lightning BOLT11.</string>
+    <string name="authentication_error_message">Error de autenticación.</string>
+    <string name="network_error_message">Error de red. Por favor revisa tu conexión a Internet.</string>
+    <string name="no_wallet_connected_message">Ninguna billetera conectada. Conecta una en los ajustes.</string>
+    <string name="server_error_message">Error del servidor: %s</string>
+    <string name="unexpected_error_message">Error inesperado. Por favor intenta de nuevo.</string>
+    <string name="wallet_error_message">Error de billetera: %s</string>
+    <string name="setting_manage_wallets">Administrar billeteras</string>
+    <string name="setting_payments">Pagos</string>
+    <string name="currency">Moneda</string>
+    <string name="language">Idioma</string>
+    <string name="wallet_settings_title">Ajustes de la billetera</string>
+    <string name="remove_wallet_button">Eliminar billetera</string>
+    <string name="add_wallet_button">Agregar billetera</string>
+    <string name="selection_none">Ninguno</string>
+    <string name="alias_label">Alias</string>
+    <string name="generic_wallet">Billetera %s</string>
+    <string name="select_wallet_type">Selecciona el tipo de billetera</string>
+    <string name="cancel_button">Cancelar</string>
+    <string name="add_generic_wallet">Agregar billetera %s</string>
+    <string name="connect_button">Conectar</string>
+    <string name="always">Siempre</string>
+    <string name="above">Encima</string>
+</resources>

@@ -8,7 +8,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.presentation.settings.components.Bar
 import xyz.lilsus.papp.presentation.settings.components.Setting
 import xyz.lilsus.papp.presentation.settings.screens.payments.components.ConfirmPaymentsAboveSlider
@@ -22,7 +24,7 @@ fun Payments(
 ) {
     val uiState by viewModel.uiState
 
-    Scaffold(topBar = { Bar("Payments", onBack) }) { innerPadding ->
+    Scaffold(topBar = { Bar(stringResource(R.string.setting_payments), onBack) }) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -34,10 +36,13 @@ fun Payments(
             uiState?.let { state ->
                 val subtitle =
                     // FIXME: Currency formatting and localization.
-                    if (state.alwaysConfirmPayments) "Always" else "Above ${state.confirmPaymentsAbove.toInt()} SAT"
+                    if (state.alwaysConfirmPayments)
+                        stringResource(R.string.always)
+                    else
+                        stringResource(R.string.above) + " ${state.confirmPaymentsAbove.toInt()} SAT"
 
                 Setting(
-                    title = "Confirm Payment",
+                    title = stringResource(R.string.confirm_payment_title),
                     subtitle = subtitle,
                     contentRight = {
                         ConfirmPaymentsToggle(

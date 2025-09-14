@@ -18,13 +18,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import xyz.lilsus.papp.R
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
-import xyz.lilsus.papp.presentation.handleErrorMessage
 import xyz.lilsus.papp.presentation.main.UiState
+import xyz.lilsus.papp.presentation.mapWalletError
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,9 +39,9 @@ fun ConfirmationBottomSheet(
     val fee = feeState
 
     val feeText = when (fee) {
-        Resource.Loading -> "Loading"
-        is Resource.Success<Pair<Long, WalletTypeEntry>> -> "Fee: ${fee.data.first}"
-        is Resource.Error -> handleErrorMessage(fee.error)
+        Resource.Loading -> stringResource(R.string.loading)
+        is Resource.Success<Pair<Long, WalletTypeEntry>> -> "${fee.data.first}"
+        is Resource.Error -> mapWalletError(fee.error)
     }
 
     val amount = uiState.data.invoice.amountSatoshi
@@ -59,7 +61,7 @@ fun ConfirmationBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Confirm Payment",
+                text = stringResource(R.string.confirm_payment_title),
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center
             )
@@ -67,7 +69,7 @@ fun ConfirmationBottomSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Amount",
+                text = stringResource(R.string.amount_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -80,7 +82,7 @@ fun ConfirmationBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Fee",
+                text = stringResource(R.string.fee_label),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -99,13 +101,13 @@ fun ConfirmationBottomSheet(
                     onClick = onPay,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Pay")
+                    Text(stringResource(R.string.pay_button))
                 }
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.dismiss_button))
                 }
             }
         }
