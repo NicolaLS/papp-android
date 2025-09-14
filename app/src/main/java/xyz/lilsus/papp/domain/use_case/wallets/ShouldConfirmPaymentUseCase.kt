@@ -4,13 +4,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
-import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
+import xyz.lilsus.papp.common.WalletResource
 import xyz.lilsus.papp.domain.repository.SettingsRepository
 
 data class InvoiceConfirmationData(
     val invoice: Invoice.Bolt11,
-    val feeFlow: Flow<Resource<Pair<Long, WalletTypeEntry>>>
+    val feeFlow: Flow<WalletResource<Long>>
 )
 
 sealed class ShouldConfirmPaymentResult {

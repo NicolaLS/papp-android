@@ -37,8 +37,8 @@ class BlinkWalletRepository(
 
     private suspend fun <D : Operation.Data, R> executeAndTransform(
         apiCall: suspend () -> ApolloResponse<D>,
-        onSuccess: (D) -> Resource<R>
-    ): Resource<R> {
+        onSuccess: (D) -> Resource<R, WalletRepositoryError>
+    ): Resource<R, WalletRepositoryError> {
         val response = withContext(dispatcher) {
             apiCall()
         }
@@ -74,7 +74,7 @@ class BlinkWalletRepository(
         return onSuccess(data)
     }
 
-    override suspend fun payBolt11Invoice(bolt11Invoice: Invoice.Bolt11): Resource<SendPaymentData> {
+    override suspend fun payBolt11Invoice(bolt11Invoice: Invoice.Bolt11): Resource<SendPaymentData, WalletRepositoryError> {
         val mutation = LnInvoicePaymentSendMutation(
             LnInvoicePaymentInput(
                 paymentRequest = bolt11Invoice.bolt11.encodedSafe,
@@ -113,7 +113,7 @@ class BlinkWalletRepository(
         }
     }
 
-    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Invoice.Bolt11): Resource<Long> {
+    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Invoice.Bolt11): Resource<Long, WalletRepositoryError> {
         val mutation = LnInvoiceFeeProbeMutation(
             LnInvoiceFeeProbeInput(
                 paymentRequest = bolt11Invoice.bolt11.encodedSafe,
