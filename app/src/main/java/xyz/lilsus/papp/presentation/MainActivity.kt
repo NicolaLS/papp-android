@@ -1,9 +1,9 @@
 package xyz.lilsus.papp.presentation
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
@@ -20,13 +20,14 @@ import xyz.lilsus.papp.presentation.settings.SettingsScreen
 import xyz.lilsus.papp.presentation.settings.SettingsViewModel
 import xyz.lilsus.papp.presentation.settings.screens.currency.Currency
 import xyz.lilsus.papp.presentation.settings.screens.language.Language
+import xyz.lilsus.papp.presentation.settings.screens.language.LanguageViewModel
 import xyz.lilsus.papp.presentation.settings.screens.payments.Payments
 import xyz.lilsus.papp.presentation.settings.screens.payments.PaymentsViewModel
 import xyz.lilsus.papp.presentation.settings.screens.wallets.Wallets
 import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletsViewModel
 import xyz.lilsus.papp.presentation.ui.theme.AppTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -116,10 +117,15 @@ fun App() {
                 Currency(onBack = { navController.popBackStack() })
             }
             composable<SettingsDestination.Language> { backStackEntry ->
-                Language(onBack = { navController.popBackStack() })
+                Language(
+                    onBack = { navController.popBackStack() },
+                    viewModel = viewModel(
+                        viewModelStoreOwner = backStackEntry,
+                        factory = LanguageViewModel.Factory
+                    )
+                )
             }
 
         }
     }
 }
-

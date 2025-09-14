@@ -23,6 +23,14 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     val walletSubtitle by viewModel.activeWalletSubtitle.collectAsState()
+    val languageTag = viewModel.activeLanguageTag
+
+    val languageSubtitle = when (languageTag) {
+        "en" -> "English"
+        "de" -> "Deutsch"
+        "es" -> "Español"
+        else -> "English"
+    }
 
     Scaffold(
         topBar = { Bar(stringResource(R.string.settings), onBack) }
@@ -47,11 +55,14 @@ fun SettingsScreen(
                 title = stringResource(R.string.currency),
                 subtitle = "BTC",
                 onClick = { onNavigate(SettingsDestination.Currency) })
-            Setting(title = stringResource(R.string.language), subtitle = "English", onClick = {
-                onNavigate(
-                    SettingsDestination.Language
-                )
-            })
+            Setting(
+                title = stringResource(R.string.language),
+                subtitle = languageSubtitle,
+                onClick = {
+                    onNavigate(
+                        SettingsDestination.Language
+                    )
+                })
         }
     }
 }
