@@ -22,6 +22,7 @@ import xyz.lilsus.papp.graphql.type.LnInvoicePaymentInput
 import xyz.lilsus.papp.graphql.type.PaymentSendResult
 import kotlin.math.abs
 
+// FIXME: Inject Logger
 class BlinkWalletRepository(
     private val walletId: String,
     private val apolloClient: ApolloClient,
