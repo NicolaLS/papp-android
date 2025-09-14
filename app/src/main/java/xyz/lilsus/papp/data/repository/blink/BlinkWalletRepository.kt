@@ -2,7 +2,8 @@ package xyz.lilsus.papp.data.repository.blink
 
 import android.util.Log
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.apollographql.apollo.exception.ApolloNetworkException
 import xyz.lilsus.papp.common.Bolt11Invoice
@@ -29,122 +30,98 @@ class BlinkWalletRepository(
 
     override val walletType = WalletTypeEntry.BLINK
 
-    // Handle fetch errors
-    private fun handleApolloException(exception: ApolloException?): WalletRepositoryError? {
-        if (exception == null) return null
+    private suspend fun <D : Operation.Data, R> executeAndTransform(
+        apiCall: suspend () -> ApolloResponse<D>,
+        onSuccess: (D) -> Resource<R>
+    ): Resource<R> {
+        val response = apiCall()
+        Log.d(TAG, "Response: $response")
 
-        Log.e(TAG, "Apollo exception in payBolt11Invoice", exception)
-        return when (exception) {
-            is ApolloHttpException -> {
-                when {
-                    exception.statusCode == 401 -> WalletRepositoryError.AuthenticationError
-                    exception.statusCode >= 500 -> WalletRepositoryError.ServerError(exception.message)
+        val exception = response.exception
+        if (exception != null) {
+            val error = when (exception) {
+                is ApolloHttpException -> when (exception.statusCode) {
+                    401 -> WalletRepositoryError.AuthenticationError
+                    in 500..599 -> WalletRepositoryError.ServerError(exception.message)
                     else -> WalletRepositoryError.UnexpectedError
                 }
-            }
 
-            is ApolloNetworkException -> WalletRepositoryError.NetworkError
-            else -> WalletRepositoryError.UnexpectedError
+                is ApolloNetworkException -> WalletRepositoryError.NetworkError
+                else -> WalletRepositoryError.UnexpectedError
+            }
+            Log.e(TAG, "Apollo Exception", exception)
+            return Resource.Error(error)
         }
+
+        if (response.hasErrors()) {
+            Log.e(TAG, "Unexpected GraphQL error: ${response.errors.toString()}")
+            return Resource.Error(WalletRepositoryError.UnexpectedError)
+        }
+
+        val data = response.data
+        if (data == null) {
+            Log.e(TAG, "GraphQL response data was null")
+            return Resource.Error(WalletRepositoryError.UnexpectedError)
+        }
+
+        return onSuccess(data)
     }
 
     override suspend fun payBolt11Invoice(bolt11Invoice: Bolt11Invoice): Resource<SendPaymentData> {
-        val input = LnInvoicePaymentInput(
-            paymentRequest = bolt11Invoice.encodedSafe,
-            walletId = walletId
+        val mutation = LnInvoicePaymentSendMutation(
+            LnInvoicePaymentInput(
+                paymentRequest = bolt11Invoice.encodedSafe,
+                walletId = walletId
+            )
         )
-        val mutation = LnInvoicePaymentSendMutation(input)
 
-        val response = apolloClient.mutation(mutation).execute()
-        val data = response.data
-        Log.d(TAG, "payBolt11Invoice response: $response")
-
-        handleApolloException(response.exception)?.let { return Resource.Error(it) }
-
-        if (response.hasErrors()) {
-            // Handle GraphQL errors in response.errors. This should never happen.
-            Log.e(TAG, "GraphQL errors in payBolt11Invoice (unexpected): ${response.errors}")
-            return Resource.Error(WalletRepositoryError.UnexpectedError)
-        }
-
-        // Handle possibly partial data.
-        val lnInvoicePaymentSend =
-            data?.lnInvoicePaymentSend
-                ?: return Resource.Error(WalletRepositoryError.UnexpectedError)
-
-        when (lnInvoicePaymentSend.status) {
-            PaymentSendResult.ALREADY_PAID -> {
-                return Resource.Success(SendPaymentData.AlreadyPaid)
-            }
-
-            PaymentSendResult.PENDING -> {
-                return Resource.Success(SendPaymentData.Pending)
-            }
-
-            PaymentSendResult.SUCCESS -> {
-                val tx = lnInvoicePaymentSend.transaction
-                if (tx == null) {
-                    Log.e(TAG, "Missing transaction data on successful payment.")
-                    return Resource.Error(WalletRepositoryError.UnexpectedError)
+        return executeAndTransform(
+            apiCall = { apolloClient.mutation(mutation).execute() }
+        ) { data ->
+            val paymentSend = data.lnInvoicePaymentSend
+            when (paymentSend.status) {
+                PaymentSendResult.ALREADY_PAID -> Resource.Success(SendPaymentData.AlreadyPaid)
+                PaymentSendResult.PENDING -> Resource.Success(SendPaymentData.Pending)
+                PaymentSendResult.SUCCESS -> {
+                    val tx = paymentSend.transaction
+                        ?: return@executeAndTransform Resource.Error(WalletRepositoryError.UnexpectedError)
+                    val amountPaidTotal = abs(tx.settlementAmount)
+                    val feePaid = abs(tx.settlementFee)
+                    Resource.Success(
+                        SendPaymentData.Success(
+                            amountPaid = amountPaidTotal - feePaid,
+                            feePaid = feePaid,
+                        )
+                    )
                 }
 
-                val amountPaidTotal = abs(tx.settlementAmount)
-                val feePaid = abs(tx.settlementFee)
-                val amountPaid = amountPaidTotal - feePaid
+                PaymentSendResult.FAILURE -> {
+                    val msg = paymentSend.errors.firstOrNull()?.message ?: "Payment failed"
+                    Resource.Error(WalletRepositoryError.WalletError(msg))
+                }
 
-                return Resource.Success(
-                    SendPaymentData.Success(
-                        amountPaid = amountPaid,
-                        feePaid = feePaid,
-                    )
-                )
-
-            }
-
-            PaymentSendResult.FAILURE -> {
-                val errorMessage =
-                    lnInvoicePaymentSend.errors.firstOrNull()?.message
-                        ?: "Unknown payment error"
-                Log.e(TAG, "Payment failure in payBolt11Invoice: $errorMessage")
-                return Resource.Error(WalletRepositoryError.WalletError(errorMessage))
-            }
-
-            PaymentSendResult.UNKNOWN__,
-            null -> {
-                return Resource.Error(WalletRepositoryError.UnexpectedError)
+                PaymentSendResult.UNKNOWN__,
+                null -> Resource.Error(WalletRepositoryError.UnexpectedError)
             }
         }
-
     }
 
     override suspend fun probeBolt11PaymentFee(bolt11Invoice: Bolt11Invoice): Resource<Long> {
-        Log.d(TAG, "probeBolt11PaymentFee called with invoice: ${bolt11Invoice.encodedSafe}")
-        val input = LnInvoiceFeeProbeInput(
-            paymentRequest = bolt11Invoice.encodedSafe,
-            walletId = walletId
+        val mutation = LnInvoiceFeeProbeMutation(
+            LnInvoiceFeeProbeInput(
+                paymentRequest = bolt11Invoice.encodedSafe,
+                walletId = walletId
+            )
         )
-        val mutation = LnInvoiceFeeProbeMutation(input)
 
-        val response = apolloClient.mutation(mutation).execute()
-        val data = response.data
-        Log.d(TAG, "probeBolt11PaymentFee response: $response")
-
-        handleApolloException(response.exception)?.let { return Resource.Error(it) }
-
-        if (response.hasErrors()) {
-            // Handle GraphQL errors in response.errors. This should never happen.
-            Log.e(TAG, "GraphQL errors in payBolt11Invoice (unexpected): ${response.errors}")
-            return Resource.Error(WalletRepositoryError.UnexpectedError)
+        return executeAndTransform(
+            apiCall = { apolloClient.mutation(mutation).execute() }
+        ) { data ->
+            val feeProbe = data.lnInvoiceFeeProbe
+            val fee = feeProbe.amount ?: return@executeAndTransform Resource.Error(
+                WalletRepositoryError.UnexpectedError
+            )
+            Resource.Success(fee)
         }
-
-        // Handle possibly partial data.
-        val lnInvoiceFeeProbe =
-            data?.lnInvoiceFeeProbe
-                ?: return Resource.Error(WalletRepositoryError.UnexpectedError)
-
-        val fee =
-            lnInvoiceFeeProbe.amount ?: return Resource.Error(WalletRepositoryError.UnexpectedError)
-        Log.d(TAG, "probeBolt11PaymentFee successful with (fee) amount: $fee")
-        return Resource.Success(fee)
     }
 }
