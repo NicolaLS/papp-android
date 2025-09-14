@@ -1,5 +1,6 @@
 package xyz.lilsus.papp.presentation.settings
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 import xyz.lilsus.papp.common.Resource
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.use_case.wallets.config.GetActiveWalletUseCase
+import java.util.Locale
 
 class SettingsViewModel(
     getActiveWallet: GetActiveWalletUseCase,
@@ -28,6 +30,21 @@ class SettingsViewModel(
             }
         }
     }
+
+    /**
+     * Gets the active language tag directly from the AppCompatDelegate.
+     * This is a property with a custom getter, so it is re-evaluated every time it's accessed,
+     * ensuring the UI always gets the latest value on recomposition.
+     */
+    val activeLanguageTag: String
+        get() {
+            val currentLocaleTag = AppCompatDelegate.getApplicationLocales().get(0)?.toLanguageTag()
+                ?: Locale.getDefault().toLanguageTag()
+
+            val primaryLanguage = currentLocaleTag.split("-").first()
+
+            return primaryLanguage
+        }
 
     val activeWalletSubtitle: StateFlow<String?> = getActiveWallet()
         .map { resource ->

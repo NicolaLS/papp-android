@@ -36,4 +36,5 @@
     <string name="connect_button">Verbinden</string>
     <string name="always">Immer</string>
     <string name="above">Über</string>
+    <string name="search">Suchen…</string>
 </resources>

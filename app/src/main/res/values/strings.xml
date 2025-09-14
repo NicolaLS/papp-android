@@ -39,5 +39,6 @@
 
     <string name="always">Always</string>
     <string name="above">Above</string>
+    <string name="search">Search…</string>
 
 </resources>
