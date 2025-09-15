@@ -7,11 +7,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import xyz.lilsus.papp.data.WalletConfigStoreSerializer.walletConfigStore
+import xyz.lilsus.papp.data.android.SimpleLocaleProvider
+import xyz.lilsus.papp.data.repository.CoinGeckoExchangeRateRepository
 import xyz.lilsus.papp.data.repository.SettingsRepositoryImpl
 import xyz.lilsus.papp.data.repository.WalletConfigRepositoryImpl
 import xyz.lilsus.papp.data.repository.WalletRepositoryFactoryImpl
-import xyz.lilsus.papp.data.repository.CoinGeckoExchangeRateRepository
 import xyz.lilsus.papp.data.settingsDataStore
+import xyz.lilsus.papp.domain.android.LocaleProvider
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import xyz.lilsus.papp.domain.use_case.amount.CreateUiAmountUseCase
 import xyz.lilsus.papp.domain.use_case.exchange.GetExchangeRateUseCase
@@ -28,6 +30,7 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
     // Use cases for currency/amount handling
     val getExchangeRateUseCase = GetExchangeRateUseCase(exchangeRateRepository)
     val createUiAmountUseCase = CreateUiAmountUseCase(settingsRepository, getExchangeRateUseCase)
+    val localeProvider: LocaleProvider = SimpleLocaleProvider()
 
     private val walletRepositoryFactory = WalletRepositoryFactoryImpl()
 
