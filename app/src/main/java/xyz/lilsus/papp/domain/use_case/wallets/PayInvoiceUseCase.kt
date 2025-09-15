@@ -13,6 +13,7 @@ import xyz.lilsus.papp.domain.model.mapError
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
+import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
 class PayInvoiceUseCase(private val repositoryFlow: StateFlow<WalletRepository?>) {
     operator fun invoke(invoice: Invoice.Bolt11): Flow<Resource<PaymentData, PaymentError>> =
@@ -37,9 +38,10 @@ class PayInvoiceUseCase(private val repositoryFlow: StateFlow<WalletRepository?>
                         SendPaymentData.AlreadyPaid -> PaymentData.AlreadyPaid(wt)
                         SendPaymentData.Pending -> PaymentData.Pending(wt)
                         is SendPaymentData.Success -> PaymentData.Paid(
-                            // TODO: The Strings will be replaced by formatable amount type.
-                            amountPaid = it.amountPaid.value.toString(),
-                            feePaid = it.feePaid.value.toString(),
+                            // TODO: Now we've got the type but we hardcode it to Sats still
+                            // nextup create a use case for this using locale and exchange rates.
+                            amountPaid = UiAmount.Sats(it.amountPaid.value),
+                            feePaid = UiAmount.Sats(it.feePaid.value),
                             walletType = wt
                         )
                     }

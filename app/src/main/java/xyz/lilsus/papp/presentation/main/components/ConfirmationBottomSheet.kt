@@ -24,9 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.WalletRepositoryError
-import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.presentation.main.UiState
+import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,17 +39,15 @@ fun ConfirmationBottomSheet(
 
     val feeText = when (fee) {
         Resource.Loading -> stringResource(R.string.loading)
-        is Resource.Success<Pair<String, WalletTypeEntry>> -> "${fee.data.first}"
-        is Resource.Error -> when (fee.error) {
-            WalletRepositoryError.AuthenticationError -> stringResource(R.string.error_authentication_message)
-            WalletRepositoryError.NetworkError -> stringResource(R.string.error_network_message)
-            WalletRepositoryError.NoWalletConnected -> stringResource(R.string.error_no_wallet_message)
-            is WalletRepositoryError.ServerError -> stringResource(R.string.error_server_message)
-            WalletRepositoryError.UnexpectedError -> stringResource(R.string.error_unexpected_message)
-            is WalletRepositoryError.WalletError -> stringResource(
-                R.string.error_wallet_message,
-                fee.error.message ?: ""
-            )
+        is Resource.Success<UiAmount> ->
+            try {
+                fee.data.format()
+            } catch (_: Exception) {
+                stringResource(R.string.error_unexpected_message)
+            }
+
+        is Resource.Error -> {
+            stringResource(fee.error.titleR)
         }
     }
 

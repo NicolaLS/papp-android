@@ -4,14 +4,15 @@ import androidx.annotation.StringRes
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
+import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
 sealed class PaymentData {
     abstract val walletType: WalletTypeEntry
 
-    // TODO: Type Amounts as format able currency.
+    // UI amounts are currency-aware and locale-formatable.
     data class Paid(
-        val amountPaid: String,
-        val feePaid: String,
+        val amountPaid: UiAmount,
+        val feePaid: UiAmount,
         override val walletType: WalletTypeEntry,
     ) : PaymentData()
 
