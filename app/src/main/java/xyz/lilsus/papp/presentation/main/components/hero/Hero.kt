@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
@@ -156,11 +157,11 @@ private fun HeroPreview() {
     val invoice = Invoice.parse(bolt11Str)
     val confirmData = InvoiceConfirmationData(
         invoice as Invoice.Bolt11,
-        flow { emit(Resource.Success(10L to WalletTypeEntry.BLINK)) }
+        flow { emit(Resource.Success(SatoshiAmount(10L) to WalletTypeEntry.BLINK)) }
     )
     val sendPaymentData = SendPaymentData.Success(
-        amountPaid = 1000,
-        feePaid = 10,
+        amountPaid = SatoshiAmount(1000),
+        feePaid = SatoshiAmount(10),
     )
     val states = listOf(
         UiState.Active,

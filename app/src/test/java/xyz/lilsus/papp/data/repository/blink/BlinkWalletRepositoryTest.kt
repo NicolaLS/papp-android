@@ -19,6 +19,7 @@ import org.junit.Before
 import org.junit.Test
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.graphql.LnInvoiceFeeProbeMutation
@@ -120,11 +121,11 @@ class BlinkWalletRepositoryTest {
             actualPay.shouldBeInstanceOf<Resource.Success<*>>()
             actualFee.shouldBeInstanceOf<Resource.Success<*>>()
             (actualPay.data).shouldBeInstanceOf<SendPaymentData.Success>()
-            (actualFee.data).shouldBeInstanceOf<Long>()
+            (actualFee.data).shouldBeInstanceOf<SatoshiAmount>()
             // Amount Paid is settlementAmount - settlementFee.
-            actualPay.data.amountPaid.shouldBeEqual(21_000L - 21L)
-            actualPay.data.feePaid.shouldBeEqual(21L)
-            actualFee.data.shouldBeEqual(21L)
+            actualPay.data.amountPaid.shouldBeEqual(SatoshiAmount(21_000L - 21L))
+            actualPay.data.feePaid.shouldBeEqual(SatoshiAmount(21L))
+            actualFee.data.shouldBeEqual(SatoshiAmount(21L))
         }
     }
 
