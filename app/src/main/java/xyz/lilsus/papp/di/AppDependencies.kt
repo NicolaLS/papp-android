@@ -10,6 +10,7 @@ import xyz.lilsus.papp.data.WalletConfigStoreSerializer.walletConfigStore
 import xyz.lilsus.papp.data.repository.SettingsRepositoryImpl
 import xyz.lilsus.papp.data.repository.WalletConfigRepositoryImpl
 import xyz.lilsus.papp.data.repository.WalletRepositoryFactoryImpl
+import xyz.lilsus.papp.data.repository.CoinGeckoExchangeRateRepository
 import xyz.lilsus.papp.data.settingsDataStore
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import java.util.concurrent.ExecutorService
@@ -18,6 +19,9 @@ import java.util.concurrent.Executors
 class AppDependencies(context: Context, private val applicationScope: CoroutineScope) {
     val walletConfigRepository = WalletConfigRepositoryImpl(context.walletConfigStore)
     val settingsRepository = SettingsRepositoryImpl(context.settingsDataStore)
+
+    // Exchange Rate Repository (CoinGecko)
+    val exchangeRateRepository = CoinGeckoExchangeRateRepository()
 
     private val walletRepositoryFactory = WalletRepositoryFactoryImpl()
 
