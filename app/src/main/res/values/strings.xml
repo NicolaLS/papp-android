@@ -10,17 +10,31 @@
     <string name="pay_button">Pay</string>
     <string name="dismiss_button">Dismiss</string>
     <string name="invoice_already_paid_title">Already paid</string>
-    <string name="payment_pending_title">Payment pending</string>"
+    <string name="payment_pending_title">Payment pending</string>
     <string name="point_camera_message_subtitle">Point the camera at an invoice.</string>
     <string name="invalid_invoice_title">Invalid Invoice</string>
     <string name="zero_amount_invoice_not_supported_message">Invoices without amount are not supported yet.</string>
-    <string name="not_bolt11_invoice_message">This is not a BOLT11 Lightning Invoice.</string>"
-    <string name="authentication_error_message">Authentication failed.</string>
-    <string name="network_error_message">Network error. Please check your internet connection.</string>
-    <string name="no_wallet_connected_message">No wallet connected. Connect a wallet in the settings.</string>
-    <string name="server_error_message">Server error: %s</string>"
-    <string name="unexpected_error_message">Unexpected error. Please try again.</string>
-    <string name="wallet_error_message">Wallet error: %s</string>
+    <string name="not_bolt11_invoice_message">This is not a BOLT11 Lightning Invoice.</string>
+
+    <!-- Payment Errors -->
+    <string name="error_authentication_title">Authentication failed</string>
+    <string name="error_authentication_message">Your connected wallet refused access. Your authentication credentials might be wrong or outdated. Please try again or reconnect your wallet.</string>
+    <string name="error_network_title">Network error</string>
+    <string name="error_network_message">We couldn’t reach the server. Please check your internet connection and try again.</string>
+
+    <string name="error_no_wallet_title">No wallet connected</string>
+    <string name="error_no_wallet_message">You need to connect a wallet before making a payment.</string>
+
+    <string name="error_server_title">Server error</string>
+    <string name="error_server_message">The server returned an error response. Please try again.</string>
+
+    <string name="error_unexpected_title">Unexpected error</string>
+    <string name="error_unexpected_message">Something went wrong. Please try again.</string>
+
+    <string name="error_wallet_title">Wallet error</string>
+    <string name="error_wallet_message">Your wallet encountered an error while processing the request: %s</string>
+
+
     <string name="setting_manage_wallets">Manage Wallets</string>
     <string name="setting_payments">Payments </string>
     <string name="currency">Currency</string>

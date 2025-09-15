@@ -14,21 +14,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.di.PappApplication
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.model.config.AddWalletEntry
-import xyz.lilsus.papp.domain.model.config.WalletEntry
 import xyz.lilsus.papp.domain.use_case.wallets.config.AddWalletUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.config.GetActiveWalletUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.config.GetAllWalletsUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.config.RemoveWalletUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.config.SetActiveWalletUseCase
-
-sealed class WalletOption {
-    data class Wallet(val entry: WalletEntry) : WalletOption()
-    object None : WalletOption()
-}
-
+import xyz.lilsus.papp.presentation.model.WalletOption
 
 class WalletsViewModel(
     getAllWallets: GetAllWalletsUseCase,

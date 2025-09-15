@@ -14,12 +14,38 @@
     <string name="invalid_invoice_title">Factura inválida</string>
     <string name="zero_amount_invoice_not_supported_message">Las facturas sin cantidad aún no se pueden usar.</string>
     <string name="not_bolt11_invoice_message">Esto no es una factura Lightning BOLT11.</string>
-    <string name="authentication_error_message">Error de autenticación.</string>
-    <string name="network_error_message">Error de red. Por favor revisa tu conexión a Internet.</string>
-    <string name="no_wallet_connected_message">Ninguna billetera conectada. Conecta una en los ajustes.</string>
-    <string name="server_error_message">Error del servidor: %s</string>
-    <string name="unexpected_error_message">Error inesperado. Por favor intenta de nuevo.</string>
-    <string name="wallet_error_message">Error de billetera: %s</string>
+    <!-- Payment Errors -->
+    <string name="error_authentication_title">Autenticación fallida</string>
+    <string name="error_authentication_message">
+    Tu billetera conectada rechazó el acceso. Es posible que tus credenciales estén mal o caducadas. Por favor, inténtalo de nuevo o vuelve a conectar tu billetera.
+</string>
+
+    <string name="error_network_title">Error de red</string>
+    <string name="error_network_message">
+    No pudimos conectar con el servidor. Por favor, revisa tu conexión a internet e inténtalo de nuevo.
+</string>
+
+    <string name="error_no_wallet_title">Ninguna billetera conectada</string>
+    <string name="error_no_wallet_message">
+    Necesitas conectar una billetera antes de realizar un pago.
+</string>
+
+    <string name="error_server_title">Error del servidor</string>
+    <string name="error_server_message">
+    El servidor devolvió una respuesta de error. Por favor, inténtalo de nuevo.
+</string>
+
+    <string name="error_unexpected_title">Error inesperado</string>
+    <string name="error_unexpected_message">
+    Algo salió mal. Por favor, inténtalo de nuevo.
+</string>
+
+    <string name="error_wallet_title">Error de la billetera</string>
+    <string name="error_wallet_message">
+    Tu billetera encontró un error al procesar la solicitud: %s
+</string>
+
+
     <string name="setting_manage_wallets">Administrar billeteras</string>
     <string name="setting_payments">Pagos</string>
     <string name="currency">Moneda</string>

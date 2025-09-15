@@ -14,7 +14,9 @@ fun BottomSheetOverlay(
     when (uiState) {
         UiState.Active,
         UiState.PerformingPayment,
-        is UiState.PaymentDone -> {
+        is UiState.PaymentResultSuccess,
+        is UiState.PaymentResultError -> {
+            // No bottom sheet in these states
         }
 
         is UiState.ConfirmPayment -> {

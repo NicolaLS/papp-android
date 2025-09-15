@@ -63,7 +63,7 @@ class HeroAnimationState(
                 UiState.Active -> animateToActive()
                 is UiState.QrDetected, is UiState.ConfirmPayment -> animateToCompressed()
                 UiState.PerformingPayment -> animateToLoading()
-                is UiState.PaymentDone -> animateToResult()
+                is UiState.PaymentResultSuccess, is UiState.PaymentResultError -> animateToResult()
             }
         }
     }

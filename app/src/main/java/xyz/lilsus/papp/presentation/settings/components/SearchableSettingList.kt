@@ -26,11 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
+import xyz.lilsus.papp.presentation.model.SettingOption
 
-data class SettingOption(
-    val displayName: String,
-    val tag: String
-)
 
 @Composable
 fun SearchableSettingList(

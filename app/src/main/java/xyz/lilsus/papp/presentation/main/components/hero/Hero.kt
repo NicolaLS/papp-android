@@ -27,13 +27,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.SatoshiAmount
-import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
-import xyz.lilsus.papp.presentation.main.PaymentResult
 import xyz.lilsus.papp.presentation.main.UiState
+import xyz.lilsus.papp.presentation.model.PaymentData
+import xyz.lilsus.papp.presentation.model.PaymentError
 import xyz.lilsus.papp.presentation.ui.theme.AppTheme
 
 private val squares = listOf(
@@ -61,10 +60,8 @@ fun Hero(
         is UiState.ConfirmPayment,
         UiState.PerformingPayment -> MaterialTheme.colorScheme.primary
 
-        is UiState.PaymentDone -> when (uiState.result) {
-            is PaymentResult.Success -> Color(0xFF4CAF50)
-            is PaymentResult.Error -> MaterialTheme.colorScheme.error
-        }
+        is UiState.PaymentResultSuccess -> Color(0xFF4CAF50)
+        is UiState.PaymentResultError -> MaterialTheme.colorScheme.error
     }
 
     val animationState = rememberHeroAnimationState(squares, arcs)
@@ -157,21 +154,27 @@ private fun HeroPreview() {
     val invoice = Invoice.parse(bolt11Str)
     val confirmData = InvoiceConfirmationData(
         invoice as Invoice.Bolt11,
-        flow { emit(Resource.Success(SatoshiAmount(10L) to WalletTypeEntry.BLINK)) }
+        flow { emit(Resource.Success("21" to WalletTypeEntry.BLINK)) }
     )
-    val sendPaymentData = SendPaymentData.Success(
-        amountPaid = SatoshiAmount(1000),
-        feePaid = SatoshiAmount(10),
+    val paymentData = PaymentData.Paid(
+        amountPaid = "1000",
+        feePaid = "10",
+        walletType = WalletTypeEntry.BLINK
     )
     val states = listOf(
         UiState.Active,
         UiState.QrDetected(Invoice.Invalid.NotBolt11Invoice),
         UiState.ConfirmPayment(confirmData),
         UiState.PerformingPayment,
-        UiState.PaymentDone(PaymentResult.Success(sendPaymentData to WalletTypeEntry.BLINK)),
+        UiState.PaymentResultSuccess(paymentData),
         UiState.Active,
         UiState.QrDetected(Invoice.Invalid.NotBolt11Invoice),
-        UiState.PaymentDone(PaymentResult.Error(WalletRepositoryError.UnexpectedError)),
+        UiState.PaymentResultError(
+            PaymentError.fromDomainWalletError(
+                WalletRepositoryError.UnexpectedError,
+                WalletTypeEntry.NOT_SET
+            )
+        ),
     )
     var currentState by remember { mutableStateOf<UiState>(UiState.Active) }
     LaunchedEffect(Unit) {

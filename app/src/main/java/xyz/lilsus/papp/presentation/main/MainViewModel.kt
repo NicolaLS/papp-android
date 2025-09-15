@@ -29,28 +29,17 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.QrCodeAnalyzer
-import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.di.PappApplication
-import xyz.lilsus.papp.domain.model.SendPaymentData
-import xyz.lilsus.papp.domain.model.WalletRepositoryError
-import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ProbeFeeUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
+import xyz.lilsus.papp.presentation.model.PaymentData
+import xyz.lilsus.papp.presentation.model.PaymentError
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
-
-
-// FIXME: Having these classes here is awkward...but the whole business logic regarding
-// the model/errors for the repos/use cases is messed up right now. So this is just to get
-// it to work and I'll clean that up later.
-
-sealed class PaymentResult {
-    data class Success(val data: Pair<SendPaymentData, WalletTypeEntry>) : PaymentResult()
-    data class Error(val error: WalletRepositoryError) : PaymentResult()
-}
 
 
 sealed class Intent {
@@ -66,7 +55,9 @@ sealed class UiState {
     data class ConfirmPayment(val data: InvoiceConfirmationData) : UiState()
 
     object PerformingPayment : UiState()
-    data class PaymentDone(val result: PaymentResult) : UiState()
+
+    data class PaymentResultSuccess(val data: PaymentData) : UiState()
+    data class PaymentResultError(val error: PaymentError) : UiState()
 }
 
 class MainViewModel(
@@ -238,14 +229,12 @@ class MainViewModel(
                 Resource.Loading -> UiState.PerformingPayment
                 is Resource.Error -> {
                     vibrate()
-                    UiState.PaymentDone(PaymentResult.Error(it.error))
+                    UiState.PaymentResultError(it.error)
                 }
 
-                is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> {
+                is Resource.Success<PaymentData> -> {
                     vibrate()
-                    UiState.PaymentDone(
-                        PaymentResult.Success(it.data)
-                    )
+                    UiState.PaymentResultSuccess(it.data)
                 }
             }
         }.launchIn(viewModelScope)
