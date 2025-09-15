@@ -82,7 +82,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
                                 .fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            PaymentResultScreen(state.data)
+                            PaymentResultScreen(state)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(R.string.tap_continue),

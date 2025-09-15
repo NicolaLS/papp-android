@@ -5,17 +5,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.repository.WalletRepository
-import xyz.lilsus.papp.domain.use_case.amount.CreateUiAmountUseCase
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
 
 class PayInvoiceUseCase(
     private val repositoryFlow: StateFlow<WalletRepository?>,
-    private val createUiAmount: CreateUiAmountUseCase,
 ) {
     operator fun invoke(invoice: Invoice.Bolt11): Flow<Resource<PaymentData, PaymentError>> =
         flow {
@@ -39,8 +38,8 @@ class PayInvoiceUseCase(
                         SendPaymentData.AlreadyPaid -> PaymentData.AlreadyPaid(wt)
                         SendPaymentData.Pending -> PaymentData.Pending(wt)
                         is SendPaymentData.Success -> PaymentData.Paid(
-                            amountPaid = createUiAmount.fromSats(it.amountPaid.value),
-                            feePaid = createUiAmount.fromSats(it.feePaid.value),
+                            amountPaid = SatoshiAmount(it.amountPaid.value),
+                            feePaid = SatoshiAmount(it.feePaid.value),
                             walletType = wt
                         )
                     }

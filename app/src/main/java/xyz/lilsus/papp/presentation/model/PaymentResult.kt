@@ -3,16 +3,16 @@ package xyz.lilsus.papp.presentation.model
 import androidx.annotation.StringRes
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
-import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
 sealed class PaymentData {
     abstract val walletType: WalletTypeEntry
 
-    // UI amounts are currency-aware and locale-formatable.
+    // Amounts are Satoshi-based; UI will format using DisplayCurrency.
     data class Paid(
-        val amountPaid: UiAmount,
-        val feePaid: UiAmount,
+        val amountPaid: SatoshiAmount,
+        val feePaid: SatoshiAmount,
         override val walletType: WalletTypeEntry,
     ) : PaymentData()
 
