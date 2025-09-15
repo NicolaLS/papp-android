@@ -12,6 +12,7 @@ import xyz.lilsus.papp.data.repository.WalletConfigRepositoryImpl
 import xyz.lilsus.papp.data.repository.WalletRepositoryFactoryImpl
 import xyz.lilsus.papp.data.settingsDataStore
 import xyz.lilsus.papp.domain.repository.WalletRepository
+import xyz.lilsus.papp.domain.use_case.CreateDisplayAmountUseCase
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -20,6 +21,8 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
     val settingsRepository = SettingsRepositoryImpl(context.settingsDataStore)
 
     private val walletRepositoryFactory = WalletRepositoryFactoryImpl()
+
+    val createDisplayAmountUseCase = CreateDisplayAmountUseCase(settingsRepository)
 
     // FIXME: This is kind of stupid
     // Expose a StateFlow of the WalletRepository (auto-updating client)

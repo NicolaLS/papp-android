@@ -40,11 +40,11 @@ fun ConfirmationBottomSheet(
 
     val feeText = when (fee) {
         Resource.Loading -> stringResource(R.string.loading)
-        is Resource.Success<Pair<Long, WalletTypeEntry>> -> "${fee.data.first}"
+        is Resource.Success<Pair<String, WalletTypeEntry>> -> fee.data.first
         is Resource.Error -> mapWalletError(fee.error)
     }
 
-    val amount = uiState.data.invoice.amountSatoshi
+    val amountFormatted = uiState.data.amountFormatted
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -74,7 +74,7 @@ fun ConfirmationBottomSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "$amount",
+                text = amountFormatted,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )

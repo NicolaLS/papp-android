@@ -29,16 +29,17 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.QrCodeAnalyzer
-import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.di.PappApplication
-import xyz.lilsus.papp.domain.model.SendPaymentData
+import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
+import xyz.lilsus.papp.domain.use_case.CreateDisplayAmountUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ProbeFeeUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
+import xyz.lilsus.papp.presentation.model.UiSendPaymentData
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 // it to work and I'll clean that up later.
 
 sealed class PaymentResult {
-    data class Success(val data: Pair<SendPaymentData, WalletTypeEntry>) : PaymentResult()
+    data class Success(val data: Pair<UiSendPaymentData, WalletTypeEntry>) : PaymentResult()
     data class Error(val error: WalletRepositoryError) : PaymentResult()
 }
 
@@ -87,10 +88,11 @@ class MainViewModel(
                 val barcodeScannerExecutor = application.appDependencies.barcodeScannerExecutor
                 val vibrator = application.appDependencies.vibrator
 
-                val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
+                val createDisplayAmountUseCase = CreateDisplayAmountUseCase(settingsRepository)
+                val payUseCase = PayInvoiceUseCase(walletRepositoryFlow, createDisplayAmountUseCase)
                 val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow)
                 val shouldConfirmPaymentUseCase =
-                    ShouldConfirmPaymentUseCase(settingsRepository, probeFeeUseCase)
+                    ShouldConfirmPaymentUseCase(settingsRepository, probeFeeUseCase, createDisplayAmountUseCase)
 
                 val imageAnalysisUseCase = ImageAnalysis.Builder()
                     .setResolutionSelector(
@@ -241,7 +243,7 @@ class MainViewModel(
                     UiState.PaymentDone(PaymentResult.Error(it.error))
                 }
 
-                is Resource.Success<Pair<SendPaymentData, WalletTypeEntry>> -> {
+                is Resource.Success<Pair<UiSendPaymentData, WalletTypeEntry>> -> {
                     vibrate()
                     UiState.PaymentDone(
                         PaymentResult.Success(it.data)

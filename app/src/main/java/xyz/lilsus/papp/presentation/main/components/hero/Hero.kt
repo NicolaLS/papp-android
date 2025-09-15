@@ -27,12 +27,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.presentation.main.PaymentResult
 import xyz.lilsus.papp.presentation.main.UiState
+import xyz.lilsus.papp.presentation.model.UiSendPaymentData
 import xyz.lilsus.papp.presentation.ui.theme.AppTheme
 
 private val squares = listOf(
@@ -156,11 +156,12 @@ private fun HeroPreview() {
     val invoice = Invoice.parse(bolt11Str)
     val confirmData = InvoiceConfirmationData(
         invoice as Invoice.Bolt11,
-        flow { emit(Resource.Success(10L to WalletTypeEntry.BLINK)) }
+        amountFormatted = "1,000 sats",
+        feeFlow = flow { emit(Resource.Success("10 sats" to WalletTypeEntry.BLINK)) }
     )
-    val sendPaymentData = SendPaymentData.Success(
-        amountPaid = 1000,
-        feePaid = 10,
+    val sendPaymentData = UiSendPaymentData.Success(
+        amountPaidFormatted = "1,000 sats",
+        feePaidFormatted = "10 sats",
     )
     val states = listOf(
         UiState.Active,
