@@ -155,6 +155,7 @@ private fun HeroPreview() {
     val invoice = Invoice.parse(bolt11Str)
     val confirmData = InvoiceConfirmationData(
         invoice as Invoice.Bolt11,
+        UiAmount.Sats(21L),
         flow { emit(Resource.Success(UiAmount.Sats(21L))) }
     )
     val paymentData = PaymentData.Paid(

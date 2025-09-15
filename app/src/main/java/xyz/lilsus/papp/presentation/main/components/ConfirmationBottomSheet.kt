@@ -51,7 +51,7 @@ fun ConfirmationBottomSheet(
         }
     }
 
-    val amount = uiState.data.invoice.amountSatoshi
+    val amount = uiState.data.amount
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -81,7 +81,7 @@ fun ConfirmationBottomSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "$amount",
+                text = amount.format(),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )

@@ -8,14 +8,15 @@ import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
-import xyz.lilsus.papp.domain.model.map
-import xyz.lilsus.papp.domain.model.mapError
 import xyz.lilsus.papp.domain.repository.WalletRepository
+import xyz.lilsus.papp.domain.use_case.amount.CreateUiAmountUseCase
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
-import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
-class PayInvoiceUseCase(private val repositoryFlow: StateFlow<WalletRepository?>) {
+class PayInvoiceUseCase(
+    private val repositoryFlow: StateFlow<WalletRepository?>,
+    private val createUiAmount: CreateUiAmountUseCase,
+) {
     operator fun invoke(invoice: Invoice.Bolt11): Flow<Resource<PaymentData, PaymentError>> =
         flow {
             emit(Resource.Loading)
@@ -31,22 +32,26 @@ class PayInvoiceUseCase(private val repositoryFlow: StateFlow<WalletRepository?>
                 )
                 return@flow
             }
-            val result = repository.payBolt11Invoice(invoice)
-                .map {
+            when (val result = repository.payBolt11Invoice(invoice)) {
+                is Resource.Success -> {
                     val wt = repository.walletType
-                    when (it) {
+                    val data = when (val it = result.data) {
                         SendPaymentData.AlreadyPaid -> PaymentData.AlreadyPaid(wt)
                         SendPaymentData.Pending -> PaymentData.Pending(wt)
                         is SendPaymentData.Success -> PaymentData.Paid(
-                            // TODO: Now we've got the type but we hardcode it to Sats still
-                            // nextup create a use case for this using locale and exchange rates.
-                            amountPaid = UiAmount.Sats(it.amountPaid.value),
-                            feePaid = UiAmount.Sats(it.feePaid.value),
+                            amountPaid = createUiAmount.fromSats(it.amountPaid.value),
+                            feePaid = createUiAmount.fromSats(it.feePaid.value),
                             walletType = wt
                         )
                     }
+                    emit(Resource.Success(data))
                 }
-                .mapError { PaymentError.fromDomainWalletError(it, repository.walletType) }
-            emit(result)
+                is Resource.Error -> emit(
+                    Resource.Error(
+                        PaymentError.fromDomainWalletError(result.error, repository.walletType)
+                    )
+                )
+                is Resource.Loading -> emit(Resource.Loading)
+            }
         }
 }

@@ -78,10 +78,15 @@ class MainViewModel(
                 val barcodeScannerExecutor = application.appDependencies.barcodeScannerExecutor
                 val vibrator = application.appDependencies.vibrator
 
-                val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
-                val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow)
+                val createUiAmountUseCase = application.appDependencies.createUiAmountUseCase
+                val payUseCase = PayInvoiceUseCase(walletRepositoryFlow, createUiAmountUseCase)
+                val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow, createUiAmountUseCase)
                 val shouldConfirmPaymentUseCase =
-                    ShouldConfirmPaymentUseCase(settingsRepository, probeFeeUseCase)
+                    ShouldConfirmPaymentUseCase(
+                        settingsRepository,
+                        probeFeeUseCase,
+                        createUiAmountUseCase
+                    )
 
                 val imageAnalysisUseCase = ImageAnalysis.Builder()
                     .setResolutionSelector(

@@ -12,6 +12,7 @@ import java.util.Locale
  * Important: The numeric values stored here must already represent the final
  * value for the target currency/unit. The UI will only format, not convert.
  */
+// TODO: Maybe pass number formatter to UiAmount from the use case to avoid business logic here.
 sealed class UiAmount {
     /**
      * Format the amount for display. No currency conversion happens here.
