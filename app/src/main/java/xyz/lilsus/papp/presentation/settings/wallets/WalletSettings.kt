@@ -16,7 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletOption
+import xyz.lilsus.papp.presentation.model.WalletOption
 import xyz.lilsus.papp.presentation.settings.screens.wallets.WalletsViewModel
 import xyz.lilsus.papp.presentation.settings.wallets.components.AddWalletModal
 import xyz.lilsus.papp.presentation.settings.wallets.components.WalletSelectionDropdown

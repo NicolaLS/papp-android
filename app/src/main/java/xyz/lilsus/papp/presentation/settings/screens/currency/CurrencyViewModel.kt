@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Constants
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.repository.SettingsRepository
-import xyz.lilsus.papp.presentation.settings.components.SettingOption
+import xyz.lilsus.papp.presentation.model.SettingOption
 
 data class CurrencyScreenState(
     val currencies: List<SettingOption> = emptyList(),

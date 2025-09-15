@@ -34,3 +34,11 @@ inline fun <T, R, E> Resource<T, E>.map(transform: (T) -> R): Resource<R, E> {
         is Resource.Loading -> this
     }
 }
+
+inline fun <T, R, E> Resource<T, E>.mapError(transform: (E) -> R): Resource<T, R> {
+    return when (this) {
+        is Resource.Success -> this
+        is Resource.Error -> Resource.Error(transform(error))
+        is Resource.Loading -> this
+    }
+}

@@ -1,7 +1,6 @@
 package xyz.lilsus.papp.presentation.settings.screens.language
 
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.runtime.Immutable
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,16 +9,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import xyz.lilsus.papp.presentation.model.SettingOption
 import java.util.Locale
 
-@Immutable
-data class LanguageOption(
-    val displayName: String,
-    val tag: String
-)
-
 data class LanguageScreenState(
-    val languages: List<LanguageOption> = emptyList(),
+    val languages: List<SettingOption> = emptyList(),
     val selectedLanguageTag: String = "",
     val searchQuery: String = "",
     val currentLanguage: String = ""
@@ -56,7 +50,7 @@ class LanguageViewModel : ViewModel() {
         }
 
         val languageOptions = supportedLanguages.map { (tag, nativeLanguageName) ->
-            LanguageOption(nativeLanguageName, tag)
+            SettingOption(nativeLanguageName, tag)
         }
 
         _uiState.value = LanguageScreenState(

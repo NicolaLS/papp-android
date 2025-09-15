@@ -1,6 +1,7 @@
 package xyz.lilsus.papp.common
 
-import xyz.lilsus.papp.presentation.settings.components.SettingOption
+import xyz.lilsus.papp.presentation.model.SettingOption
+
 
 object Constants {
     // Reasonable max. value for the "confirm amount above" slider.

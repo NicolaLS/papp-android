@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun PaymentError(message: String?) {
+fun PaymentErrorView(error: xyz.lilsus.papp.presentation.model.PaymentError) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -23,14 +23,15 @@ fun PaymentError(message: String?) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = message ?: "Something went wrong...",
+            text = androidx.compose.ui.res.stringResource(error.titleR),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.error
         )
         Spacer(Modifier.height(8.dp))
+        val message = error.messageStr ?: androidx.compose.ui.res.stringResource(error.messageR)
         Text(
-            text = "Please try again or check your connection.",
+            text = message,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -7,8 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import xyz.lilsus.papp.R
+import xyz.lilsus.papp.presentation.model.SettingOption
 import xyz.lilsus.papp.presentation.settings.components.SearchableSettingList
-import xyz.lilsus.papp.presentation.settings.components.SettingOption
 
 @Composable
 fun Language(

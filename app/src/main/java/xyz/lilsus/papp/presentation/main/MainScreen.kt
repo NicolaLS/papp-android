@@ -30,7 +30,9 @@ import xyz.lilsus.papp.presentation.ext.tapToDismiss
 import xyz.lilsus.papp.presentation.main.components.BottomLayout
 import xyz.lilsus.papp.presentation.main.components.BottomSheetOverlay
 import xyz.lilsus.papp.presentation.main.components.PaymentResultScreen
+import xyz.lilsus.papp.presentation.main.components.PaymentErrorView
 import xyz.lilsus.papp.presentation.main.components.hero.Hero
+import xyz.lilsus.papp.presentation.model.PaymentData
 
 
 @Composable
@@ -39,13 +41,6 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
     val context = LocalContext.current
 
     val uiState = viewModel.uiState
-    var paymentResult = remember { mutableStateOf<PaymentResult?>(null) }
-
-    LaunchedEffect(uiState) {
-        if (uiState is UiState.PaymentDone) {
-            paymentResult.value = uiState.result
-        }
-    }
 
     LaunchedEffect(context, lifecycleOwner) {
         viewModel.dispatch(
@@ -66,7 +61,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
             .fillMaxSize()
             .systemBarsPadding()
             .tapToDismiss(
-                enabled = uiState is UiState.PaymentDone,
+                enabled = uiState is UiState.PaymentResultSuccess,
                 onDismiss = { viewModel.dispatch(Intent.Dismiss) }
             )
     ) {
@@ -79,26 +74,37 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 uiState = uiState,
             )
-            Crossfade(targetState = uiState is UiState.PaymentDone) { showPaymentResultLayout ->
-                when (showPaymentResultLayout) {
-                    true -> {
-                        val currentPaymentResult = paymentResult.value
+            Crossfade(targetState = uiState) { state ->
+                when (state) {
+                    is UiState.PaymentResultSuccess -> {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            currentPaymentResult?.let { PaymentResultScreen(currentPaymentResult) }
+                            PaymentResultScreen(state.data)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(R.string.tap_continue),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
-
                     }
-
-                    false -> {
+                    is UiState.PaymentResultError -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            PaymentErrorView(state.error)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.tap_continue),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                    else -> {
                         BottomLayout(
                             title = stringResource(R.string.app_name_long),
                             subtitle = stringResource(R.string.point_camera_message_subtitle)

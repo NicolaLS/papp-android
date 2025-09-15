@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.StateFlow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.WalletResource
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.map
 import xyz.lilsus.papp.domain.repository.WalletRepository
@@ -14,12 +13,13 @@ class ProbeFeeUseCase(
 ) {
     suspend operator fun invoke(
         invoice: Invoice.Bolt11
-    ): WalletResource<SatoshiAmount> {
+        // TODO: Return Display Amount
+    ): WalletResource<String> {
         val repository = repositoryFlow.value
             ?: return Resource.Error(WalletRepositoryError.NoWalletConnected)
 
         val result = repository.probeBolt11PaymentFee(invoice)
-            .map { it to repository.walletType }
+            .map { it.value.toString() to repository.walletType }
         return result
     }
 }

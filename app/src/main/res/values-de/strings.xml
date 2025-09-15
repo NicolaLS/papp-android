@@ -14,12 +14,38 @@
     <string name="invalid_invoice_title">Ungültige Rechnung</string>
     <string name="zero_amount_invoice_not_supported_message">Rechnungen ohne Betrag werden noch nicht unterstützt.</string>
     <string name="not_bolt11_invoice_message">Dies ist keine BOLT11 Lightning Rechnung.</string>
-    <string name="authentication_error_message">Authentifizierung fehlgeschlagen.</string>
-    <string name="network_error_message">Netzwerkfehler. Bitte überprüfe deine Internetverbindung.</string>
-    <string name="no_wallet_connected_message">Keine Wallet verbunden. Verbinde eine Wallet in den Einstellungen.</string>
-    <string name="server_error_message">Serverfehler: %s</string>
-    <string name="unexpected_error_message">Unerwarteter Fehler. Bitte versuche es erneut.</string>
-    <string name="wallet_error_message">Wallet-Fehler: %s</string>
+
+    <!-- Payment Errors -->
+    <string name="error_authentication_title">Authentifizierung fehlgeschlagen</string>
+    <string name="error_authentication_message">
+    Dein verbundenes Wallet hat den Zugriff verweigert. Deine Anmeldedaten sind möglicherweise falsch oder veraltet. Bitte versuche es erneut oder verbinde dein Wallet neu.
+</string>
+
+    <string name="error_network_title">Netzwerkfehler</string>
+    <string name="error_network_message">
+    Wir konnten den Server nicht erreichen. Bitte überprüfe deine Internetverbindung und versuche es erneut.
+</string>
+
+    <string name="error_no_wallet_title">Kein Wallet verbunden</string>
+    <string name="error_no_wallet_message">
+    Du musst ein Wallet verbinden, bevor du eine Zahlung durchführen kannst.
+</string>
+
+    <string name="error_server_title">Serverfehler</string>
+    <string name="error_server_message">
+    Der Server hat eine Fehlermeldung zurückgegeben. Bitte versuche es erneut.
+</string>
+
+    <string name="error_unexpected_title">Unerwarteter Fehler</string>
+    <string name="error_unexpected_message">
+    Etwas ist schiefgelaufen. Bitte versuche es erneut.
+</string>
+
+    <string name="error_wallet_title">Wallet-Fehler</string>
+    <string name="error_wallet_message">
+    Dein Wallet hat beim Verarbeiten der Anfrage einen Fehler festgestellt: %s
+</string>
+
     <string name="setting_manage_wallets">Wallets Verwalten</string>
     <string name="setting_payments">Zahlungen</string>
     <string name="currency">Währung</string>
