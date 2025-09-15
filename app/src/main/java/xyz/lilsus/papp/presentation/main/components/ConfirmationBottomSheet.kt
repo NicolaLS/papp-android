@@ -16,6 +16,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -25,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.presentation.main.UiState
-import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,23 +35,34 @@ fun ConfirmationBottomSheet(
     onDismiss: () -> Unit
 ) {
     val feeState by uiState.data.feeFlow.collectAsState(initial = Resource.Loading)
-    val fee = feeState
+    val displayCurrency by uiState.displayCurrency.collectAsState()
+    val display by uiState.display.collectAsState()
 
-    val feeText = when (fee) {
+    val amountFmtOrNull = remember(displayCurrency, display, uiState.data.amount) {
+        val er = display.exchangeRate
+        if (displayCurrency is xyz.lilsus.papp.domain.model.amount.DisplayCurrency.Fiat && er == null) {
+            null
+        } else {
+            runCatching { displayCurrency.format(uiState.data.amount, er) }.getOrNull()
+        }
+    }
+    val amountFmt = amountFmtOrNull ?: stringResource(R.string.loading)
+
+    val feeText = when (val fee = feeState) {
         Resource.Loading -> stringResource(R.string.loading)
-        is Resource.Success<UiAmount> ->
-            try {
-                fee.data.format()
-            } catch (_: Exception) {
-                stringResource(R.string.error_unexpected_message)
+        is Resource.Success -> {
+            val er = display.exchangeRate
+            if (displayCurrency is xyz.lilsus.papp.domain.model.amount.DisplayCurrency.Fiat && er == null) {
+                stringResource(R.string.loading)
+            } else {
+                runCatching { displayCurrency.format(fee.data, er) }
+                    .getOrElse { stringResource(R.string.error_unexpected_message) }
             }
-
+        }
         is Resource.Error -> {
             stringResource(fee.error.titleR)
         }
     }
-
-    val amount = uiState.data.amount
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -81,7 +92,7 @@ fun ConfirmationBottomSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = amount.format(),
+                text = amountFmt,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )

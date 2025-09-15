@@ -33,7 +33,7 @@ import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.presentation.main.UiState
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
-import xyz.lilsus.papp.presentation.model.amount.UiAmount
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.presentation.ui.theme.AppTheme
 
 private val squares = listOf(
@@ -155,12 +155,12 @@ private fun HeroPreview() {
     val invoice = Invoice.parse(bolt11Str)
     val confirmData = InvoiceConfirmationData(
         invoice as Invoice.Bolt11,
-        UiAmount.Sats(21L),
-        flow { emit(Resource.Success(UiAmount.Sats(21L))) }
+        SatoshiAmount(21L),
+        flow { emit(Resource.Success(SatoshiAmount(21L))) }
     )
     val paymentData = PaymentData.Paid(
-        amountPaid = UiAmount.Sats(1000),
-        feePaid = UiAmount.Sats(10),
+        amountPaid = SatoshiAmount(1000),
+        feePaid = SatoshiAmount(10),
         walletType = WalletTypeEntry.BLINK
     )
     val states = listOf(
