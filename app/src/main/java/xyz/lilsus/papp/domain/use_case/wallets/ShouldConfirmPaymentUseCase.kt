@@ -6,11 +6,13 @@ import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.repository.SettingsRepository
+import xyz.lilsus.papp.domain.use_case.amount.CreateUiAmountUseCase
 import xyz.lilsus.papp.presentation.model.PaymentError
 import xyz.lilsus.papp.presentation.model.amount.UiAmount
 
 data class InvoiceConfirmationData(
     val invoice: Invoice.Bolt11,
+    val amount: UiAmount,
     val feeFlow: Flow<Resource<UiAmount, PaymentError>>
 )
 
@@ -24,6 +26,7 @@ sealed class ShouldConfirmPaymentResult {
 class ShouldConfirmPaymentUseCase(
     private val settingsRepository: SettingsRepository,
     private val probeFee: ProbeFeeUseCase,
+    private val createUiAmount: CreateUiAmountUseCase
 ) {
     suspend operator fun invoke(
         invoice: Invoice.Bolt11,
@@ -37,6 +40,7 @@ class ShouldConfirmPaymentUseCase(
             ShouldConfirmPaymentResult.ConfirmationRequired(
                 InvoiceConfirmationData(
                     invoice,
+                    createUiAmount.fromSats(invoice.amountSatoshi),
                     flow { emit(probeFee(invoice)) }
                 )
             )
