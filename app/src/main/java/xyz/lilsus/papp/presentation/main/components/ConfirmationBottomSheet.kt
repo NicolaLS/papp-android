@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.presentation.main.UiState
 import xyz.lilsus.papp.presentation.mapWalletError
@@ -40,7 +41,7 @@ fun ConfirmationBottomSheet(
 
     val feeText = when (fee) {
         Resource.Loading -> stringResource(R.string.loading)
-        is Resource.Success<Pair<Long, WalletTypeEntry>> -> "${fee.data.first}"
+        is Resource.Success<Pair<SatoshiAmount, WalletTypeEntry>> -> "${fee.data.first}"
         is Resource.Error -> mapWalletError(fee.error)
     }
 

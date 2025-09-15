@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.Resource
+import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
@@ -96,8 +97,8 @@ class BlinkWalletRepository(
                     val feePaid = abs(tx.settlementFee)
                     Resource.Success(
                         SendPaymentData.Success(
-                            amountPaid = amountPaidTotal - feePaid,
-                            feePaid = feePaid,
+                            amountPaid = SatoshiAmount(amountPaidTotal - feePaid),
+                            feePaid = SatoshiAmount(feePaid),
                         )
                     )
                 }
@@ -113,7 +114,7 @@ class BlinkWalletRepository(
         }
     }
 
-    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Invoice.Bolt11): Resource<Long> {
+    override suspend fun probeBolt11PaymentFee(bolt11Invoice: Invoice.Bolt11): Resource<SatoshiAmount> {
         val mutation = LnInvoiceFeeProbeMutation(
             LnInvoiceFeeProbeInput(
                 paymentRequest = bolt11Invoice.bolt11.encodedSafe,
@@ -128,7 +129,7 @@ class BlinkWalletRepository(
             val fee = feeProbe.amount ?: return@executeAndTransform Resource.Error(
                 WalletRepositoryError.UnexpectedError
             )
-            Resource.Success(fee)
+            Resource.Success(SatoshiAmount(fee))
         }
     }
 }
