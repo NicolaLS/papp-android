@@ -13,11 +13,11 @@ fun PaymentResultScreen(result: PaymentData) {
     val title = when (result) {
         is PaymentData.AlreadyPaid -> stringResource(R.string.invoice_already_paid_title)
         is PaymentData.Pending -> stringResource(R.string.payment_pending_title)
-        is PaymentData.Paid -> "${result.amountPaid} SAT"
+        is PaymentData.Paid -> result.amountPaid.format()
     }
 
     val subtitle = when (result) {
-        is PaymentData.Paid -> "${stringResource(R.string.fee_label)} ${result.feePaid} SAT"
+        is PaymentData.Paid -> "${stringResource(R.string.fee_label)} ${result.feePaid.format()}"
         else -> null
     }
 
