@@ -24,13 +24,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
-import java.text.NumberFormat
-import java.util.Locale
-import java.util.Currency
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
@@ -53,7 +49,11 @@ import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
+import java.text.NumberFormat
+import java.util.Currency
+import java.util.Locale
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -98,6 +98,7 @@ sealed class UiState {
         val displayCurrency: StateFlow<DisplayCurrency> = defaultDisplayCurrencyFlow(),
         val display: StateFlow<DisplayCurrencyAndRate> = defaultDisplayContextFlow(),
     ) : UiState()
+
     data class PaymentResultError(val error: PaymentError) : UiState()
 }
 
@@ -117,12 +118,14 @@ class MainViewModel(
                 val application = (this[APPLICATION_KEY] as PappApplication)
                 val settingsRepository = application.appDependencies.settingsRepository
                 val walletRepositoryFlow = application.appDependencies.walletRepositoryFlow
-                val analyzerExecutor = application.appDependencies.analyzerExecutor
-                val barcodeScannerExecutor = application.appDependencies.barcodeScannerExecutor
+                val analyzerExecutor: ExecutorService = Executors.newCachedThreadPool()
+                val barcodeScannerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
                 val vibrator = application.appDependencies.vibrator
 
-                val getDisplayCurrencyUseCase = application.appDependencies.getDisplayCurrencyUseCase
-                val getExchangeRateFlowUseCase = application.appDependencies.getExchangeRateFlowUseCase
+                val getDisplayCurrencyUseCase =
+                    application.appDependencies.getDisplayCurrencyUseCase
+                val getExchangeRateFlowUseCase =
+                    application.appDependencies.getExchangeRateFlowUseCase
                 val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
                 val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow)
                 val shouldConfirmPaymentUseCase =
@@ -320,6 +323,7 @@ class MainViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        // Probably this is unnecessary since they are scoped to the view model but it does not hurt.
         analyzerExecutor.shutdownNow()
         invoiceAnalyzer.executor.shutdownNow()
     }
