@@ -11,9 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
+import xyz.lilsus.papp.domain.model.amount.SatoshiAmount
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import xyz.lilsus.papp.graphql.LnInvoiceFeeProbeMutation

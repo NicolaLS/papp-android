@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.model.Resource
+import xyz.lilsus.papp.domain.model.amount.DisplayCurrency
 import xyz.lilsus.papp.domain.repository.SettingsRepository
 import xyz.lilsus.papp.domain.use_case.wallets.config.GetActiveWalletUseCase
 import java.util.Locale
@@ -35,11 +36,11 @@ class SettingsViewModel(
         }
     }
 
-    val activeCurrency: StateFlow<String> = settingsRepository.currency
+    val activeCurrency: StateFlow<DisplayCurrency> = settingsRepository.currency
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            "SAT"
+            DisplayCurrency.Satoshi
         )
 
     /**

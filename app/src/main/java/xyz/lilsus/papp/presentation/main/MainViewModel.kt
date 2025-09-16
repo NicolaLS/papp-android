@@ -24,24 +24,19 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.common.QrCodeAnalyzer
 import xyz.lilsus.papp.di.PappApplication
+import xyz.lilsus.papp.domain.android.LocaleProvider
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.amount.DisplayCurrency
-import xyz.lilsus.papp.domain.model.exchange.ExchangeRate
-import xyz.lilsus.papp.domain.use_case.amount.GetDisplayCurrencyUseCase
-import xyz.lilsus.papp.domain.use_case.exchange.GetExchangeRateFlowUseCase
+import xyz.lilsus.papp.domain.model.amount.Formatter
+import xyz.lilsus.papp.domain.use_case.amount.GetFormatterFlowUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.domain.use_case.wallets.PayInvoiceUseCase
 import xyz.lilsus.papp.domain.use_case.wallets.ProbeFeeUseCase
@@ -49,9 +44,6 @@ import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentResult
 import xyz.lilsus.papp.domain.use_case.wallets.ShouldConfirmPaymentUseCase
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
-import java.text.NumberFormat
-import java.util.Currency
-import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -59,27 +51,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 sealed class Intent {
     object Dismiss : Intent()
+    object RefreshLocale : Intent()
     data class BindCamera(val context: Context, val lifecycleOwner: LifecycleOwner) : Intent()
     data class PayInvoice(val invoice: Invoice.Bolt11) : Intent()
 }
-
-private fun defaultDisplayCurrencyFlow(): StateFlow<DisplayCurrency> =
-    MutableStateFlow(
-        DisplayCurrency.Sat(NumberFormat.getIntegerInstance(Locale.getDefault()))
-    )
-
-data class DisplayCurrencyAndRate(
-    val displayCurrency: DisplayCurrency,
-    val exchangeRate: ExchangeRate?
-)
-
-private fun defaultDisplayContextFlow(): StateFlow<DisplayCurrencyAndRate> =
-    MutableStateFlow(
-        DisplayCurrencyAndRate(
-            DisplayCurrency.Sat(NumberFormat.getIntegerInstance(Locale.getDefault())),
-            null
-        )
-    )
 
 sealed class UiState {
     object Active : UiState()
@@ -87,16 +62,12 @@ sealed class UiState {
 
     data class ConfirmPayment(
         val data: InvoiceConfirmationData,
-        val displayCurrency: StateFlow<DisplayCurrency> = defaultDisplayCurrencyFlow(),
-        val display: StateFlow<DisplayCurrencyAndRate> = defaultDisplayContextFlow(),
     ) : UiState()
 
     object PerformingPayment : UiState()
 
     data class PaymentResultSuccess(
         val data: PaymentData,
-        val displayCurrency: StateFlow<DisplayCurrency> = defaultDisplayCurrencyFlow(),
-        val display: StateFlow<DisplayCurrencyAndRate> = defaultDisplayContextFlow(),
     ) : UiState()
 
     data class PaymentResultError(val error: PaymentError) : UiState()
@@ -105,12 +76,12 @@ sealed class UiState {
 class MainViewModel(
     val payUseCase: PayInvoiceUseCase,
     val shouldConfirmPayment: ShouldConfirmPaymentUseCase,
+    val getFormatter: GetFormatterFlowUseCase,
+    val localeProvider: LocaleProvider,
     val imageAnalysisUseCase: ImageAnalysis,
     val invoiceAnalyzer: QrCodeAnalyzer,
     val analyzerExecutor: ExecutorService,
     val vibrator: Vibrator?,
-    private val getDisplayCurrency: GetDisplayCurrencyUseCase,
-    private val getExchangeRateFlow: GetExchangeRateFlowUseCase,
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -122,10 +93,9 @@ class MainViewModel(
                 val barcodeScannerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
                 val vibrator = application.appDependencies.vibrator
 
-                val getDisplayCurrencyUseCase =
-                    application.appDependencies.getDisplayCurrencyUseCase
-                val getExchangeRateFlowUseCase =
-                    application.appDependencies.getExchangeRateFlowUseCase
+                val getFormatterFlowUseCase =
+                    application.appDependencies.getFormatterFlowUseCase
+                val localeProvider = application.appDependencies.localeProvider
                 val payUseCase = PayInvoiceUseCase(walletRepositoryFlow)
                 val probeFeeUseCase = ProbeFeeUseCase(walletRepositoryFlow)
                 val shouldConfirmPaymentUseCase =
@@ -162,12 +132,12 @@ class MainViewModel(
                 MainViewModel(
                     payUseCase,
                     shouldConfirmPaymentUseCase,
+                    getFormatterFlowUseCase,
+                    localeProvider,
                     imageAnalysisUseCase,
                     analyzer,
                     analyzerExecutor,
-                    vibrator,
-                    getDisplayCurrencyUseCase,
-                    getExchangeRateFlowUseCase
+                    vibrator
                 )
             }
         }
@@ -202,33 +172,13 @@ class MainViewModel(
     var uiState by mutableStateOf<UiState>(UiState.Active)
         private set
 
-    private val displayCurrency: StateFlow<DisplayCurrency> =
-        getDisplayCurrency()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = DisplayCurrency.Sat(NumberFormat.getIntegerInstance(Locale.getDefault()))
-            )
 
-    private val display: StateFlow<DisplayCurrencyAndRate> =
-        displayCurrency
-            .flatMapLatest { dc ->
-                val rateFlow = if (dc is DisplayCurrency.Fiat) {
-                    val c = Currency.getInstance(dc.isoCode)
-                    getExchangeRateFlow(c).map { it as ExchangeRate? }
-                } else {
-                    flowOf(null)
-                }
-                rateFlow.map { rate -> DisplayCurrencyAndRate(dc, rate) }
-            }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = DisplayCurrencyAndRate(
-                    DisplayCurrency.Sat(NumberFormat.getIntegerInstance(Locale.getDefault())),
-                    null
-                )
-            )
+    val formatter: StateFlow<Formatter?> = getFormatter()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
 
     init {
         invoiceAnalyzer.onQrCodeDetected {
@@ -243,6 +193,10 @@ class MainViewModel(
     fun dispatch(intent: Intent) {
         when (intent) {
             Intent.Dismiss -> reset()
+            Intent.RefreshLocale -> {
+                localeProvider.refresh()
+            }
+
             is Intent.BindCamera -> bindCamera(intent.context, intent.lifecycleOwner)
             is Intent.PayInvoice -> executePaymentProposal(intent.invoice)
         }
@@ -299,7 +253,7 @@ class MainViewModel(
                 }
 
                 is ShouldConfirmPaymentResult.ConfirmationRequired -> {
-                    uiState = UiState.ConfirmPayment(confirm.data, displayCurrency, display)
+                    uiState = UiState.ConfirmPayment(confirm.data)
                 }
             }
         }
@@ -316,7 +270,7 @@ class MainViewModel(
 
                 is Resource.Success<PaymentData> -> {
                     vibrate()
-                    UiState.PaymentResultSuccess(it.data, displayCurrency, display)
+                    UiState.PaymentResultSuccess(it.data)
                 }
             }
         }.launchIn(viewModelScope)

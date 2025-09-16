@@ -28,12 +28,12 @@ import kotlinx.coroutines.flow.flow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
+import xyz.lilsus.papp.domain.model.amount.SatoshiAmount
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.use_case.wallets.InvoiceConfirmationData
 import xyz.lilsus.papp.presentation.main.UiState
 import xyz.lilsus.papp.presentation.model.PaymentData
 import xyz.lilsus.papp.presentation.model.PaymentError
-import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.presentation.ui.theme.AppTheme
 
 private val squares = listOf(

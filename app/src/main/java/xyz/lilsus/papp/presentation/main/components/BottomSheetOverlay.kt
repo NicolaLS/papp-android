@@ -2,6 +2,7 @@ package xyz.lilsus.papp.presentation.main.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import xyz.lilsus.papp.domain.model.amount.Formatter
 import xyz.lilsus.papp.presentation.main.Intent
 import xyz.lilsus.papp.presentation.main.UiState
 
@@ -9,6 +10,7 @@ import xyz.lilsus.papp.presentation.main.UiState
 fun BottomSheetOverlay(
     modifier: Modifier = Modifier,
     uiState: UiState,
+    formatter: Formatter?,
     onAction: (Intent) -> Unit
 ) {
     when (uiState) {
@@ -22,6 +24,7 @@ fun BottomSheetOverlay(
         is UiState.ConfirmPayment -> {
             ConfirmationBottomSheet(
                 uiState = uiState,
+                formatter = formatter,
                 onPay = { onAction(Intent.PayInvoice(uiState.data.invoice)) },
                 onDismiss = { onAction(Intent.Dismiss) }
             )

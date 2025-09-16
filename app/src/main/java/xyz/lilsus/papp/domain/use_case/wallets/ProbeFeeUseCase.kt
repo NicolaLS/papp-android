@@ -3,8 +3,8 @@ package xyz.lilsus.papp.domain.use_case.wallets
 import kotlinx.coroutines.flow.StateFlow
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
+import xyz.lilsus.papp.domain.model.amount.SatoshiAmount
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import xyz.lilsus.papp.presentation.model.PaymentError
@@ -28,6 +28,7 @@ class ProbeFeeUseCase(
             is Resource.Error -> Resource.Error(
                 PaymentError.fromDomainWalletError(result.error, repository.walletType)
             )
+
             is Resource.Loading -> Resource.Loading
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,8 +49,13 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
         )
     }
 
+    LaunchedEffect(Unit) { viewModel.dispatch(Intent.RefreshLocale) }
+
+    val formatterState = viewModel.formatter.collectAsState(initial = null)
+
     BottomSheetOverlay(
         uiState = uiState,
+        formatter = formatterState.value,
         onAction = viewModel::dispatch
     )
 
@@ -79,7 +85,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
                                 .fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            PaymentResultScreen(state)
+                            PaymentResultScreen(state, formatter = formatterState.value)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(R.string.tap_continue),
