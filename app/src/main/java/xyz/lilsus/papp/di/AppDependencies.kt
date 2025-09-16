@@ -17,8 +17,6 @@ import xyz.lilsus.papp.domain.android.LocaleProvider
 import xyz.lilsus.papp.domain.repository.WalletRepository
 import xyz.lilsus.papp.domain.use_case.amount.GetDisplayCurrencyUseCase
 import xyz.lilsus.papp.domain.use_case.exchange.GetExchangeRateFlowUseCase
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 class AppDependencies(context: Context, private val applicationScope: CoroutineScope) {
     val walletConfigRepository = WalletConfigRepositoryImpl(context.walletConfigStore)
@@ -45,7 +43,5 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
                 initialValue = null
             )
 
-    val analyzerExecutor: ExecutorService = Executors.newCachedThreadPool()
-    val barcodeScannerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     val vibrator: Vibrator? = context.getSystemService(Vibrator::class.java)
 }
