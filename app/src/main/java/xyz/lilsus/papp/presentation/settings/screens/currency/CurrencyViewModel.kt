@@ -11,13 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import xyz.lilsus.papp.common.Constants
 import xyz.lilsus.papp.di.PappApplication
 import xyz.lilsus.papp.domain.repository.SettingsRepository
-import xyz.lilsus.papp.presentation.model.SettingOption
+
 
 data class CurrencyScreenState(
-    val currencies: List<SettingOption> = emptyList(),
     val selectedCurrencyTag: String = "",
     val searchQuery: String = ""
 )
@@ -48,7 +46,6 @@ class CurrencyViewModel(
         viewModelScope.launch {
             val selectedTag = settingsRepository.currency.first()
             _uiState.value = CurrencyScreenState(
-                currencies = Constants.SUPPORTED_CURRENCIES,
                 selectedCurrencyTag = selectedTag.ifEmpty { "SAT" }
             )
         }
