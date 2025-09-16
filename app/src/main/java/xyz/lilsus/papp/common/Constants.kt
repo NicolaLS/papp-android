@@ -1,6 +1,5 @@
 package xyz.lilsus.papp.common
 
-import xyz.lilsus.papp.presentation.model.SettingOption
 import java.util.Currency
 
 object Constants {
@@ -26,18 +25,10 @@ object Constants {
         Currency.getInstance("INR"),
     )
 
-    // UI options derived from the type-safe currency list plus Bitcoin units.
-    // We keep tags as stable String codes for persistence and navigation, but the
-    // underlying fiat options are sourced from java.util.Currency.
-    val SUPPORTED_CURRENCIES: List<SettingOption> = buildList {
-        // Bitcoin units (non-ISO)
-        add(SettingOption("Satoshi", "SAT"))
-        add(SettingOption("Bitcoin", "BTC"))
-
-        // Fiat currencies (ISO 4217)
-        addAll(SUPPORTED_FIAT_CURRENCIES.map { c ->
-            // Use the localized display name where available
-            SettingOption(c.displayName, c.currencyCode)
-        })
+    // Stable list of supported currency tags (codes) including Bitcoin units.
+    val SUPPORTED_CURRENCY_CODES: List<String> = buildList {
+        add("SAT")
+        add("BTC")
+        addAll(SUPPORTED_FIAT_CURRENCIES.map { it.currencyCode })
     }
 }

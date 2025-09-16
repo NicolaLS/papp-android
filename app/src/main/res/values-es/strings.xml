@@ -63,4 +63,17 @@
     <string name="always">Siempre</string>
     <string name="above">Encima</string>
     <string name="search">Buscar…</string>
+    
+    <!-- Currency names -->
+    <string name="currency_sat">Satoshi</string>
+    <string name="currency_btc">Bitcoin</string>
+    <string name="currency_usd">Dólar estadounidense</string>
+    <string name="currency_eur">Euro</string>
+    <string name="currency_gbp">Libra esterlina</string>
+    <string name="currency_cad">Dólar canadiense</string>
+    <string name="currency_aud">Dólar australiano</string>
+    <string name="currency_chf">Franco suizo</string>
+    <string name="currency_jpy">Yen japonés</string>
+    <string name="currency_cny">Yuan chino</string>
+    <string name="currency_inr">Rupia india</string>
 </resources>
