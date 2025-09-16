@@ -17,8 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,10 +27,9 @@ import xyz.lilsus.papp.R
 import xyz.lilsus.papp.presentation.ext.tapToDismiss
 import xyz.lilsus.papp.presentation.main.components.BottomLayout
 import xyz.lilsus.papp.presentation.main.components.BottomSheetOverlay
-import xyz.lilsus.papp.presentation.main.components.PaymentResultScreen
 import xyz.lilsus.papp.presentation.main.components.PaymentErrorView
+import xyz.lilsus.papp.presentation.main.components.PaymentResultScreen
 import xyz.lilsus.papp.presentation.main.components.hero.Hero
-import xyz.lilsus.papp.presentation.model.PaymentData
 
 
 @Composable
@@ -61,7 +58,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
             .fillMaxSize()
             .systemBarsPadding()
             .tapToDismiss(
-                enabled = uiState is UiState.PaymentResultSuccess,
+                enabled = uiState is UiState.PaymentResultSuccess || uiState is UiState.PaymentResultError,
                 onDismiss = { viewModel.dispatch(Intent.Dismiss) }
             )
     ) {
@@ -90,6 +87,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
                             )
                         }
                     }
+
                     is UiState.PaymentResultError -> {
                         Column(
                             modifier = Modifier
@@ -104,6 +102,7 @@ fun MainScreen(viewModel: MainViewModel, onSettingsClick: () -> Unit) {
                             )
                         }
                     }
+
                     else -> {
                         BottomLayout(
                             title = stringResource(R.string.app_name_long),
