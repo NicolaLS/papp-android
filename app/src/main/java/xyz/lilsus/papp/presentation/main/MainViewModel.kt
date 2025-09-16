@@ -260,6 +260,7 @@ class MainViewModel(
     private fun bindCamera(context: Context, lifecycleOwner: LifecycleOwner) {
         viewModelScope.launch {
             cameraProvider = ProcessCameraProvider.awaitInstance(context)
+            cameraProvider?.unbindAll()
             cameraProvider?.bindToLifecycle(
                 lifecycleOwner,
                 CameraSelector.DEFAULT_BACK_CAMERA,
