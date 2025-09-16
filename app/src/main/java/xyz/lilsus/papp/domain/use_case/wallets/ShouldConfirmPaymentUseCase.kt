@@ -9,7 +9,7 @@ import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.repository.SettingsRepository
 import xyz.lilsus.papp.presentation.model.PaymentError
 
- data class InvoiceConfirmationData(
+data class InvoiceConfirmationData(
     val invoice: Invoice.Bolt11,
     val amount: SatoshiAmount,
     val feeFlow: Flow<Resource<SatoshiAmount, PaymentError>>
@@ -33,6 +33,7 @@ class ShouldConfirmPaymentUseCase(
         return if (
             paymentSettings == null ||
             paymentSettings.alwaysConfirmPayment ||
+            // Only if invoice amount is *above* the configured amount.
             paymentSettings.confirmPaymentAbove < invoice.amountSatoshi
         ) {
             ShouldConfirmPaymentResult.ConfirmationRequired(
