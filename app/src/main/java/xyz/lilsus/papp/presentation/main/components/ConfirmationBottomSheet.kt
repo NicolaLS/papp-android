@@ -25,43 +25,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.Resource
+import xyz.lilsus.papp.domain.model.amount.Formatter
 import xyz.lilsus.papp.presentation.main.UiState
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun ConfirmationBottomSheet(
     uiState: UiState.ConfirmPayment,
+    formatter: Formatter?,
     onPay: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val feeState by uiState.data.feeFlow.collectAsState(initial = Resource.Loading)
-    val displayCurrency by uiState.displayCurrency.collectAsState()
-    val display by uiState.display.collectAsState()
+    val amountFmtOrNull =
+        remember(formatter, uiState.data.amount) { formatter?.format(uiState.data.amount) }
 
-    val amountFmtOrNull = remember(displayCurrency, display, uiState.data.amount) {
-        val er = display.exchangeRate
-        if (displayCurrency is xyz.lilsus.papp.domain.model.amount.DisplayCurrency.Fiat && er == null) {
-            null
-        } else {
-            runCatching { displayCurrency.format(uiState.data.amount, er) }.getOrNull()
-        }
-    }
     val amountFmt = amountFmtOrNull ?: stringResource(R.string.loading)
 
-    val feeText = when (val fee = feeState) {
+    val feeText = when (val res = feeState) {
         Resource.Loading -> stringResource(R.string.loading)
-        is Resource.Success -> {
-            val er = display.exchangeRate
-            if (displayCurrency is xyz.lilsus.papp.domain.model.amount.DisplayCurrency.Fiat && er == null) {
-                stringResource(R.string.loading)
-            } else {
-                runCatching { displayCurrency.format(fee.data, er) }
-                    .getOrElse { stringResource(R.string.error_unexpected_message) }
-            }
-        }
-        is Resource.Error -> {
-            stringResource(fee.error.titleR)
-        }
+        is Resource.Success -> formatter?.format(res.data) ?: stringResource(R.string.loading)
+        is Resource.Error -> stringResource(res.error.titleR)
     }
 
     val sheetState = rememberModalBottomSheetState(

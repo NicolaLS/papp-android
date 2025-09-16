@@ -54,7 +54,7 @@ fun SettingsScreen(
                 onClick = { onNavigate(SettingsDestination.Payments) })
             Setting(
                 title = stringResource(R.string.currency),
-                subtitle = currency,
+                subtitle = currency.getTag(),
                 onClick = { onNavigate(SettingsDestination.Currency) })
             Setting(
                 title = stringResource(R.string.language),

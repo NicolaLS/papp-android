@@ -3,7 +3,7 @@ package xyz.lilsus.papp.presentation.model
 import androidx.annotation.StringRes
 import xyz.lilsus.papp.R
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
-import xyz.lilsus.papp.domain.model.SatoshiAmount
+import xyz.lilsus.papp.domain.model.amount.SatoshiAmount
 import xyz.lilsus.papp.domain.model.config.WalletTypeEntry
 
 sealed class PaymentData {

@@ -1,5 +1,7 @@
 package xyz.lilsus.papp.domain.model
 
+import xyz.lilsus.papp.domain.model.amount.SatoshiAmount
+
 sealed class SendPaymentData {
     data class Success(
         // TODO: Add this instead of returning Pair<> from use cases...

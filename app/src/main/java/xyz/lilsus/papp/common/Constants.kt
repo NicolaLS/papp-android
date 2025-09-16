@@ -9,6 +9,8 @@ object Constants {
 
     // Reasonable default "confirm amount above" value.
     const val DEFAULT_CONFIRM_ABOVE = 20_000f
+    const val DEFAULT_CURRENCY_CODE = "SAT"
+    const val DEFAULT_FALLBACK_FIAT = "USD"
 
     // Type-safe list of supported fiat currencies for the app (java.util.Currency)
     // Note: BTC and SAT are not ISO 4217 currencies, so they are handled separately in the

@@ -19,9 +19,9 @@ import org.junit.Before
 import org.junit.Test
 import xyz.lilsus.papp.common.Invoice
 import xyz.lilsus.papp.domain.model.Resource
-import xyz.lilsus.papp.domain.model.SatoshiAmount
 import xyz.lilsus.papp.domain.model.SendPaymentData
 import xyz.lilsus.papp.domain.model.WalletRepositoryError
+import xyz.lilsus.papp.domain.model.amount.SatoshiAmount
 import xyz.lilsus.papp.graphql.LnInvoiceFeeProbeMutation
 import xyz.lilsus.papp.graphql.LnInvoicePaymentSendMutation
 import xyz.lilsus.papp.graphql.type.LnInvoiceFeeProbeInput

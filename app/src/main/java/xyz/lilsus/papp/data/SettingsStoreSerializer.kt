@@ -20,6 +20,7 @@ object SettingsStoreSerializer : Serializer<SettingsStore> {
                 .setAlwaysConfirmPayment(Constants.DEFAULT_ALWAYS_CONFIRM_PAYMENT)
                 .setConfirmPaymentAbove(Constants.DEFAULT_CONFIRM_ABOVE)
         )
+        .setCurrency(Constants.DEFAULT_CURRENCY_CODE)
         .build()
 
     override suspend fun readFrom(input: InputStream): SettingsStore {

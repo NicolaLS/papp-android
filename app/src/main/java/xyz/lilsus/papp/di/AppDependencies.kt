@@ -15,7 +15,7 @@ import xyz.lilsus.papp.data.repository.WalletRepositoryFactoryImpl
 import xyz.lilsus.papp.data.settingsDataStore
 import xyz.lilsus.papp.domain.android.LocaleProvider
 import xyz.lilsus.papp.domain.repository.WalletRepository
-import xyz.lilsus.papp.domain.use_case.amount.GetDisplayCurrencyUseCase
+import xyz.lilsus.papp.domain.use_case.amount.GetFormatterFlowUseCase
 import xyz.lilsus.papp.domain.use_case.exchange.GetExchangeRateFlowUseCase
 
 class AppDependencies(context: Context, private val applicationScope: CoroutineScope) {
@@ -26,9 +26,14 @@ class AppDependencies(context: Context, private val applicationScope: CoroutineS
     val exchangeRateRepository = CoinGeckoExchangeRateRepository()
 
     // Use cases for currency/amount handling
-    val getExchangeRateFlowUseCase = GetExchangeRateFlowUseCase(exchangeRateRepository, 30_000L)
+    val getExchangeRateFlowUseCase = GetExchangeRateFlowUseCase(
+        exchangeRateRepository = exchangeRateRepository,
+        applicationScope = applicationScope,
+        pollingIntervalMs = 10_000L,
+    )
     val localeProvider: LocaleProvider = SimpleLocaleProvider()
-    val getDisplayCurrencyUseCase = GetDisplayCurrencyUseCase(settingsRepository, localeProvider)
+    val getFormatterFlowUseCase =
+        GetFormatterFlowUseCase(settingsRepository, localeProvider, getExchangeRateFlowUseCase)
 
     private val walletRepositoryFactory = WalletRepositoryFactoryImpl()
 

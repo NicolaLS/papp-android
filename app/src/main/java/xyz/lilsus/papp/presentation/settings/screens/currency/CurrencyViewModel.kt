@@ -44,9 +44,9 @@ class CurrencyViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            val selectedTag = settingsRepository.currency.first()
+            val selected = settingsRepository.currency.first()
             _uiState.value = CurrencyScreenState(
-                selectedCurrencyTag = selectedTag.ifEmpty { "SAT" }
+                selectedCurrencyTag = selected.getTag()
             )
         }
     }
