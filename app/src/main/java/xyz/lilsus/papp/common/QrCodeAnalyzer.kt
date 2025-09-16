@@ -21,7 +21,7 @@ class QrCodeAnalyzer(
         const val TAG = "QR_CODE_ANALYZER"
     }
 
-    private lateinit var callback: (String) -> Unit
+    private var callback: (String) -> Unit = {}
 
     fun onQrCodeDetected(cb: (String) -> Unit): QrCodeAnalyzer {
         Log.d(TAG, "Attached onQrCodeDetected callback")
